@@ -175,8 +175,6 @@ function start()
 
         compute_time_start = time_ns()
 
-        SD.draw!(image, SD.Image(SD.Point(1, 1), background_image))
-
         text = "Press the escape key to quit"
         SI.do_widget!(
             SI.TEXT,
@@ -382,6 +380,8 @@ function start()
                 )
             end
         end
+
+        SD.draw!(image, SD.Image(SD.Point(1, 1), background_image))
 
         for drawable in ui_context.draw_list
             SD.draw!(image, drawable)
