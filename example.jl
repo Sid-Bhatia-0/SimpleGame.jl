@@ -144,6 +144,8 @@ function start()
     check_box_value = false
     debug_text_list = String[]
 
+    background_image = map(x -> BinaryTransparentColor(convert(ColorTypes.RGBA{FPN.N0f8}, x)), FileIO.load("assets/background.png"))
+
     ui_context = SI.UIContext(user_interaction_state, user_input_state, layout, COLORS, Any[])
 
     i = 0
@@ -173,7 +175,7 @@ function start()
 
         compute_time_start = time_ns()
 
-        SD.draw!(image, SD.Background(), ui_context.colors[Integer(SI.COLOR_INDEX_BACKGROUND)])
+        SD.draw!(image, SD.Image(SD.Point(1, 1), background_image))
 
         text = "Press the escape key to quit"
         SI.do_widget!(
