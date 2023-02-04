@@ -144,7 +144,9 @@ function start()
     check_box_value = false
     debug_text_list = String[]
 
+    # assets
     background_image = map(x -> BinaryTransparentColor(convert(ColorTypes.RGBA{FPN.N0f8}, x)), FileIO.load("assets/background.png"))
+    burning_loop_animation = map(x -> BinaryTransparentColor(convert(ColorTypes.RGBA{FPN.N0f8}, x)), FileIO.load("assets/burning_loop_1.png"))
 
     ui_context = SI.UIContext(user_interaction_state, user_input_state, layout, COLORS, Any[])
 
@@ -382,6 +384,9 @@ function start()
         end
 
         SD.draw!(image, SD.Image(SD.Point(1, 1), background_image))
+
+        animation_frame = mod1(i, 8)
+        SD.draw!(image, SD.Image(SD.Point(540, 960), (@view burning_loop_animation[:, (animation_frame - 1) * 24 + 1 : animation_frame * 24])))
 
         for drawable in ui_context.draw_list
             SD.draw!(image, drawable)
