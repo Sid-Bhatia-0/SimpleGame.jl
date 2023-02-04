@@ -109,39 +109,6 @@ function start()
     font_height = SD.get_height(font)
     font_width = SD.get_width(font)
 
-    widget_gap = font_width ÷ 2
-
-    # widget: button
-    button_num_clicks = 0
-
-    # widget: slider
-    slider_height = font_height
-    slider_width = 20 * font_width
-    slider_value = (0, 0, 0, 0)
-
-    # widget: image
-    sample_image = map(x -> BinaryTransparentColor(convert(ColorTypes.RGBA{FPN.N0f8}, x)), FileIO.load("assets/mandrill.png"))
-    sample_image_height, sample_image_width = size(sample_image)
-    image_widget_height = 5 * font_height
-    image_widget_width = 20 * font_width
-    image_widget_horizontal_slider_height = font_height
-    image_widget_horizontal_slider_width = image_widget_width
-    image_widget_horizontal_slider_bar_width = SI.get_bar_length(8, image_widget_width, image_widget_width, sample_image_width)
-    image_widget_horizontal_slider_value = (0, 0, 0, 0)
-    image_widget_drawable = SD.Image(SD.move(SD.Point(1, 1), -image_widget_horizontal_slider_value[1], -image_widget_horizontal_slider_value[2]), sample_image)
-
-    # widget: text_box
-    text_box_value = collect("Enter text")
-
-    # widget: radio_button
-    radio_button_value = 1
-
-    # widget: drop_down
-    drop_down_selected_item = 1
-    drop_down_value = false
-
-    # widget: check_box
-    check_box_value = false
     debug_text_list = String[]
 
     # assets
@@ -186,201 +153,18 @@ function start()
             alignment = SI.UP1_LEFT1,
         )
 
-        SI.do_widget!(
-            SI.TEXT,
-            ui_context,
-            SI.WidgetID(@__FILE__, @__LINE__, 1),
-            "Button";
-            widget_width = 16 * font_width,
-        )
-        temp_bounding_box = layout.reference_bounding_box
-
-        button_value = SI.do_widget!(
-            SI.BUTTON,
-            ui_context,
-            SI.WidgetID(@__FILE__, @__LINE__, 1),
-            "$(button_num_clicks)";
-            alignment = SI.UP1_RIGHT2,
-            widget_width = 20 * font_width,
-        )
-        if button_value
-            button_num_clicks += 1
-        end
-
-        layout.reference_bounding_box = temp_bounding_box
-        SI.do_widget!(
-            SI.TEXT,
-            ui_context,
-            SI.WidgetID(@__FILE__, @__LINE__, 1),
-            "Slider";
-            widget_width = 16 * font_width,
-        )
-        temp_bounding_box = layout.reference_bounding_box
-
-        slider_value = SI.do_widget!(
-            SI.SLIDER,
-            ui_context,
-            SI.WidgetID(@__FILE__, @__LINE__, 1),
-            slider_value,
-            "$(slider_value[1]), $(slider_value[2])";
-            bar_height = font_height ÷ 2,
-            bar_width = font_height * 2,
-            alignment = SI.UP1_RIGHT2,
-            widget_height = slider_height,
-            widget_width = slider_width,
-        )
-
-        layout.reference_bounding_box = temp_bounding_box
-        SI.do_widget!(
-            SI.TEXT,
-            ui_context,
-            SI.WidgetID(@__FILE__, @__LINE__, 1),
-            "TextBox";
-            widget_width = 16 * font_width,
-        )
-        temp_bounding_box = layout.reference_bounding_box
-
-        SI.do_widget!(
-            SI.TEXT_BOX,
-            ui_context,
-            SI.WidgetID(@__FILE__, @__LINE__, 1),
-            text_box_value;
-            alignment = SI.UP1_RIGHT2,
-            widget_width = 20 * font_width,
-        )
-
-        layout.reference_bounding_box = temp_bounding_box
-        SI.do_widget!(
-            SI.TEXT,
-            ui_context,
-            SI.WidgetID(@__FILE__, @__LINE__, 1),
-            "Image";
-            widget_width = 16 * font_width,
-        )
-        temp_bounding_box = layout.reference_bounding_box
-
-        SI.do_widget!(
-            SI.IMAGE,
-            ui_context,
-            SI.WidgetID(@__FILE__, @__LINE__, 1),
-            image_widget_drawable;
-            alignment = SI.UP1_RIGHT2,
-            widget_height = image_widget_height,
-            widget_width = image_widget_width,
-        )
-        temp_bounding_box = SI.get_enclosing_bounding_box(temp_bounding_box, layout.reference_bounding_box)
-
-        image_widget_horizontal_slider_value = SI.do_widget!(
-            SI.SLIDER,
-            ui_context,
-            SI.WidgetID(@__FILE__, @__LINE__, 1),
-            image_widget_horizontal_slider_value,
-            "$(image_widget_horizontal_slider_value[1]), $(image_widget_horizontal_slider_value[2])";
-            bar_height = image_widget_horizontal_slider_height,
-            bar_width = image_widget_horizontal_slider_bar_width,
-            widget_width = 20 * font_width,
-        )
-        image_widget_j_scroll = SI.get_scroll_value(image_widget_horizontal_slider_value[2], image_widget_horizontal_slider_bar_width, image_widget_width, image_widget_width, SD.get_width(image_widget_drawable))
-        image_widget_drawable = SD.Image(SD.move(SD.Point(1, 1), 0, -image_widget_j_scroll), image_widget_drawable.image)
-        temp_bounding_box = SI.get_enclosing_bounding_box(temp_bounding_box, layout.reference_bounding_box)
-
-        layout.reference_bounding_box = temp_bounding_box
-        SI.do_widget!(
-            SI.TEXT,
-            ui_context,
-            SI.WidgetID(@__FILE__, @__LINE__, 1),
-            "RadioButtonList";
-            widget_width = 16 * font_width,
-        )
-        temp_bounding_box = layout.reference_bounding_box
-
-        radio_button_item_list = ("item a", "item b", "item c")
-        radio_button_value = SI.do_widget!(
-            SI.RADIO_BUTTON_LIST,
-            ui_context,
-            SI.WidgetID(@__FILE__, @__LINE__, 1),
-            radio_button_value,
-            radio_button_item_list;
-            alignment = SI.UP1_RIGHT2,
-        )
-        temp_bounding_box = SI.get_enclosing_bounding_box(temp_bounding_box, layout.reference_bounding_box)
-
-        layout.reference_bounding_box = temp_bounding_box
-        SI.do_widget!(
-            SI.TEXT,
-            ui_context,
-            SI.WidgetID(@__FILE__, @__LINE__, 1),
-            "DropDown";
-            widget_width = 16 * font_width,
-        )
-        temp_bounding_box = layout.reference_bounding_box
-
-        drop_down_item_list = ("item 1", "item 2", "item 3")
-        drop_down_value = SI.do_widget!(
-            SI.DROP_DOWN,
-            ui_context,
-            SI.WidgetID(@__FILE__, @__LINE__, 1),
-            drop_down_value,
-            drop_down_item_list[drop_down_selected_item];
-            alignment = SI.UP1_RIGHT2,
-            widget_width = (maximum(SI.get_num_printable_characters, drop_down_item_list) + 2) * font_width,
-        )
-        temp_bounding_box = SI.get_enclosing_bounding_box(temp_bounding_box, layout.reference_bounding_box)
-
-        if drop_down_value
-            drop_down_selected_item = SI.do_widget!(
-                SI.RADIO_BUTTON_LIST,
-                ui_context,
-                SI.WidgetID(@__FILE__, @__LINE__, 1),
-                drop_down_selected_item,
-                drop_down_item_list;
-            )
-            temp_bounding_box = SI.get_enclosing_bounding_box(temp_bounding_box, layout.reference_bounding_box)
-        end
-
-        layout.reference_bounding_box = temp_bounding_box
-        SI.do_widget!(
-            SI.TEXT,
-            ui_context,
-            SI.WidgetID(@__FILE__, @__LINE__, 1),
-            "CheckBox";
-            widget_width = 16 * font_width,
-        )
-        temp_bounding_box = layout.reference_bounding_box
         push!(debug_text_list, "previous frame number: $(i)")
         push!(debug_text_list, "average total time spent per frame (averaged over previous $(length(frame_time_stamp_buffer)) frames): $(round((last(frame_time_stamp_buffer) - first(frame_time_stamp_buffer)) / (1e6 * length(frame_time_stamp_buffer)), digits = 2)) ms")
         push!(debug_text_list, "average compute time spent per frame (averaged over previous $(length(frame_compute_time_buffer)) frames): $(round(sum(frame_compute_time_buffer) / (1e6 * length(frame_compute_time_buffer)), digits = 2)) ms")
         push!(debug_text_list, "average texture upload time spent per frame (averaged over previous $(length(texture_upload_time_buffer)) frames): $(round(sum(texture_upload_time_buffer) / (1e6 * length(texture_upload_time_buffer)), digits = 3)) ms")
-        push!(debug_text_list, "Monitor video mode: $(GLFW.GetVideoMode(GLFW.GetWindowMonitor(window)))")
-        push!(debug_text_list, "cursor: $(user_input_state.cursor)")
-        push!(debug_text_list, "mouse_left: $(user_input_state.mouse_buttons[Int(GLFW.MOUSE_BUTTON_LEFT) + 1])")
-        push!(debug_text_list, "count_went_down(mouse_left): $(SI.count_went_down(user_input_state.mouse_buttons[Int(GLFW.MOUSE_BUTTON_LEFT) + 1]))")
-        push!(debug_text_list, "count_went_up(mouse_left): $(SI.count_went_up(user_input_state.mouse_buttons[Int(GLFW.MOUSE_BUTTON_LEFT) + 1]))")
-        push!(debug_text_list, "mouse_right: $(user_input_state.mouse_buttons[Int(GLFW.MOUSE_BUTTON_RIGHT) + 1])")
-        push!(debug_text_list, "mouse_middle: $(user_input_state.mouse_buttons[Int(GLFW.MOUSE_BUTTON_MIDDLE) + 1])")
-        push!(debug_text_list, "hot_widget: $(user_interaction_state.hot_widget)")
-        push!(debug_text_list, "active_widget: $(user_interaction_state.active_widget)")
 
-        text = "Show debug text"
-        check_box_value = SI.do_widget!(
-            SI.CHECK_BOX,
-            ui_context,
-            SI.WidgetID(@__FILE__, @__LINE__, 1),
-            check_box_value,
-            text;
-            alignment = SI.UP1_RIGHT2,
-        )
-
-        if check_box_value
-            layout.reference_bounding_box = temp_bounding_box
-            for (j, text) in enumerate(debug_text_list)
-                SI.do_widget!(
-                    SI.TEXT,
-                    ui_context,
-                    SI.WidgetID(@__FILE__, @__LINE__, j),
-                    text;
-                )
-            end
+        for (j, text) in enumerate(debug_text_list)
+            SI.do_widget!(
+                SI.TEXT,
+                ui_context,
+                SI.WidgetID(@__FILE__, @__LINE__, j),
+                text;
+            )
         end
 
         SD.draw!(image, SD.Image(SD.Point(1, 1), background_image))
