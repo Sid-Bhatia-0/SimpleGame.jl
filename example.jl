@@ -137,8 +137,11 @@ function start()
     texture_upload_time_buffer = DS.CircularBuffer{typeof(time_ns())}(sliding_window_size)
     push!(texture_upload_time_buffer, zero(UInt))
 
-    sleep_time_observed = 0
-    sleep_time_theoretical_seconds = 0
+    sleep_time_theoretical_seconds_buffer = DS.CircularBuffer{typeof(time())}(sliding_window_size)
+    push!(sleep_time_theoretical_seconds_buffer, zero(time()))
+
+    sleep_time_observed_buffer = DS.CircularBuffer{typeof(time_ns())}(sliding_window_size)
+    push!(sleep_time_observed_buffer, zero(UInt))
 
     while !GLFW.WindowShouldClose(window)
         if SI.went_down(user_input_state.keyboard_buttons[Int(GLFW.KEY_ESCAPE) + 1])
@@ -170,7 +173,7 @@ function start()
             push!(debug_text_list, "average total time spent per frame (averaged over previous $(length(frame_time_stamp_buffer) - 1) frames): $(round((last(frame_time_stamp_buffer) - first(frame_time_stamp_buffer)) / (1e6 * (length(frame_time_stamp_buffer) - 1)), digits = 2)) ms")
         end
 
-        push!(debug_text_list, "sleep_time_observed - sleep_time_theoretical: $(round((sleep_time_observed - sleep_time_theoretical_seconds * 1e9) / 1e6, digits = 2)) ms")
+        push!(debug_text_list, "(avg. sleep time observed) - (avg. sleep time theoretical): $(round(sum(sleep_time_observed_buffer) / (1e6 * length(sleep_time_observed_buffer)) - sum(sleep_time_theoretical_seconds_buffer) * 1000 / length(sleep_time_theoretical_seconds_buffer), digits = 2)) ms")
 
         push!(debug_text_list, "average compute time spent per frame (averaged over previous $(length(frame_compute_time_buffer)) frames): $(round(sum(frame_compute_time_buffer) / (1e6 * length(frame_compute_time_buffer)), digits = 2)) ms")
 
@@ -213,14 +216,15 @@ function start()
 
         i = i + 1
 
-        sleep_start_time = time_ns()
-
         sleep_time_theoretical_seconds = max(0.0, min_seconds_per_frame - (time_ns() - last(frame_time_stamp_buffer)) / 1e9)
-        sleep(sleep_time_theoretical_seconds)
+        push!(sleep_time_theoretical_seconds_buffer, sleep_time_theoretical_seconds)
 
+        sleep_start_time = time_ns()
+        sleep(sleep_time_theoretical_seconds)
         sleep_end_time = time_ns()
 
         sleep_time_observed = (sleep_end_time - sleep_start_time)
+        push!(sleep_time_observed_buffer, sleep_time_observed)
 
         push!(frame_time_stamp_buffer, time_ns())
     end
