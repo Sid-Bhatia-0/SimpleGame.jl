@@ -26,7 +26,7 @@ function load_texture(texture_atlas, filename; num_frames = 1)
     return TextureIndex(start, height, width)
 end
 
-function get_texture(texture_atlas, texture_index, animation_frame = 1)
+function get_texture(texture_atlas, texture_index; animation_frame = 1)
     start = texture_index.start
     height = texture_index.height
     width = texture_index.width
