@@ -128,22 +128,18 @@ function start()
     max_frames_per_second = 60
     min_seconds_per_frame = 1 / max_frames_per_second
 
-    # frame_time_stamp_buffer = DS.CircularBuffer{typeof(time_ns())}(sliding_window_size)
     frame_time_stamp_buffer = DS.CircularBuffer{typeof(time_ns())}(sliding_window_size + one(sliding_window_size))
     push!(frame_time_stamp_buffer, time_ns())
 
-    # frame_compute_time_buffer = DS.CircularBuffer{typeof(time_ns())}(sliding_window_size)
     frame_compute_time_buffer = DS.CircularBuffer{typeof(time_ns())}(sliding_window_size + one(sliding_window_size))
     push!(frame_compute_time_buffer, zero(UInt))
 
-    # texture_upload_time_buffer = DS.CircularBuffer{typeof(time_ns())}(sliding_window_size)
     texture_upload_time_buffer = DS.CircularBuffer{typeof(time_ns())}(sliding_window_size + one(sliding_window_size))
     push!(texture_upload_time_buffer, zero(UInt))
 
     game_loop_start_time = time_ns()
 
     sleep_time_observed_ns = 0
-    sleep_time_observed_seconds = 0
     sleep_time_theoretical_seconds = 0
 
     while !GLFW.WindowShouldClose(window)
@@ -176,9 +172,7 @@ function start()
 
         push!(debug_text_list, "new method average total time spent per frame (averaged over previous $(length(frame_time_stamp_buffer)) frames): $(round((last(frame_time_stamp_buffer) - first(frame_time_stamp_buffer)) / (1e6 * (length(frame_time_stamp_buffer) - 1)), digits = 2)) ms")
 
-        push!(debug_text_list, "sleep_time_observed - sleep_time_theoretical (using time_ns()): $(round((sleep_time_observed_ns - sleep_time_theoretical_seconds * 1e9) / 1e6, digits = 2)) ms")
-
-        push!(debug_text_list, "sleep_time_observed - sleep_time_theoretical (using time()): $(round((sleep_time_observed_seconds - sleep_time_theoretical_seconds) * 1000, digits = 2)) ms")
+        push!(debug_text_list, "sleep_time_observed - sleep_time_theoretical: $(round((sleep_time_observed_ns - sleep_time_theoretical_seconds * 1e9) / 1e6, digits = 2)) ms")
 
         push!(debug_text_list, "average total time spent per frame: $(round((time_ns() - game_loop_start_time) / (1e6 * (i + 1)), digits = 2)) ms")
 
@@ -224,17 +218,13 @@ function start()
         i = i + 1
 
         sleep_start_time_ns = time_ns()
-        sleep_start_time_seconds = time()
 
         sleep_time_theoretical_seconds = max(0.0, min_seconds_per_frame - (time_ns() - last(frame_time_stamp_buffer)) / 1e9)
-        # sleep(max(0.0, min_seconds_per_frame - (time_ns() - last(frame_time_stamp_buffer)) / 1e9))
         sleep(sleep_time_theoretical_seconds)
 
         sleep_end_time_ns = time_ns()
-        sleep_end_time_seconds = time()
 
         sleep_time_observed_ns = (sleep_end_time_ns - sleep_start_time_ns)
-        sleep_time_observed_seconds = (sleep_end_time_seconds - sleep_start_time_seconds)
 
         push!(frame_time_stamp_buffer, time_ns())
     end
