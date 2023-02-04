@@ -179,8 +179,8 @@ function start()
 
         SD.draw!(image, SD.Image(SD.Point(1, 1), get_texture(texture_atlas, background_ti)))
 
-        animation_frame = mod1(i, 8)
-        SD.draw!(image, SD.Image(SD.Point(540, 960), get_texture(texture_atlas, burning_loop_animation_ti, animation_frame = animation_frame)))
+        frame_number = mod1(i, 8)
+        SD.draw!(image, SD.Image(SD.Point(540, 960), get_texture(texture_atlas, burning_loop_animation_ti, frame_number = frame_number)))
 
         for drawable in ui_context.draw_list
             SD.draw!(image, drawable)

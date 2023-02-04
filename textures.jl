@@ -26,12 +26,12 @@ function load_texture(texture_atlas, filename; num_frames = 1)
     return TextureIndex(start, height, width)
 end
 
-function get_texture(texture_atlas, texture_index; animation_frame = 1)
+function get_texture(texture_atlas, texture_index; frame_number = 1)
     start = texture_index.start
     height = texture_index.height
     width = texture_index.width
 
-    start = start + (animation_frame - one(animation_frame)) * height * width
+    start = start + (frame_number - one(frame_number)) * height * width
 
     image_view = @view texture_atlas.data[start : start + height * width - one(start)]
 
