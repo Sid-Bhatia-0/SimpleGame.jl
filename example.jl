@@ -117,7 +117,7 @@ function start()
     color_type = BinaryTransparentColor{CT.RGBA{FPN.N0f8}}
     texture_atlas = TextureAtlas(color_type[])
     background_ti = load_texture(texture_atlas, "assets/background.png")
-    burning_loop_animation_ti = load_texture(texture_atlas, "assets/burning_loop_1.png", 8)
+    burning_loop_animation_ti = load_texture(texture_atlas, "assets/burning_loop_1.png", num_frames = 8, length_scale = 4)
 
     ui_context = SI.UIContext(user_interaction_state, user_input_state, layout, COLORS, Any[])
 
@@ -179,8 +179,8 @@ function start()
 
         SD.draw!(image, SD.Image(SD.Point(1, 1), get_texture(texture_atlas, background_ti)))
 
-        animation_frame = mod1(i, 8)
-        SD.draw!(image, SD.Image(SD.Point(540, 960), get_texture(texture_atlas, burning_loop_animation_ti, animation_frame)))
+        frame_number = mod1(i, 8)
+        SD.draw!(image, SD.Image(SD.Point(540, 960), get_texture(texture_atlas, burning_loop_animation_ti, frame_number = frame_number)))
 
         for drawable in ui_context.draw_list
             SD.draw!(image, drawable)
