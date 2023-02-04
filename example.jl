@@ -117,7 +117,7 @@ function start()
     color_type = BinaryTransparentColor{CT.RGBA{FPN.N0f8}}
     texture_atlas = TextureAtlas(color_type[])
     background_ti = load_texture(texture_atlas, "assets/background.png")
-    burning_loop_animation_ti = load_texture(texture_atlas, "assets/burning_loop_1.png", 8)
+    burning_loop_animation_ti = load_texture(texture_atlas, "assets/burning_loop_1.png", num_frames = 8)
 
     ui_context = SI.UIContext(user_interaction_state, user_input_state, layout, COLORS, Any[])
 

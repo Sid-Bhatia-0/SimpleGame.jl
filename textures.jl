@@ -8,7 +8,7 @@ struct TextureAtlas{C}
     data::Vector{C}
 end
 
-function load_texture(texture_atlas, filename, num_frames = 1)
+function load_texture(texture_atlas, filename; num_frames = 1)
     image = FileIO.load(filename)
 
     start = length(texture_atlas.data) + 1
