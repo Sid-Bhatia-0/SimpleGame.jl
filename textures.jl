@@ -8,22 +8,43 @@ struct TextureAtlas{C}
     data::Vector{C}
 end
 
-function load_texture(texture_atlas, filename; num_frames = 1)
+function load_texture(texture_atlas, filename; num_frames = 1, length_scale = 1)
+    texture_data = texture_atlas.data
+
     image = FileIO.load(filename)
 
-    start = length(texture_atlas.data) + 1
-    height, width = size(image)
+    texture_start = length(texture_data) + 1
+    image_height, image_width = size(image)
 
-    @assert width % num_frames == 0
-    width = width ÷ num_frames
+    @assert image_width % num_frames == 0
+    frame_height = image_height * length_scale
+    frame_width = (image_width ÷ num_frames) * length_scale
 
     C = eltype(texture_atlas.data)
 
-    for color in image
-        push!(texture_atlas.data, C(color))
+    resize!(texture_data, length(texture_data) + image_height * length_scale * image_width * length_scale)
+
+    texture = reshape(
+        @view(texture_data[texture_start : texture_start + image_height * length_scale * image_width * length_scale - one(texture_start)]),
+        image_height * length_scale,
+        image_width * length_scale,
+    )
+
+    for j in 1:image_width
+        for i in 1:image_height
+            i_start = (i - one(i)) * length_scale + one(i)
+            i_end = i_start + length_scale - one(i)
+
+            j_start = (j - one(j)) * length_scale + one(j)
+            j_end = j_start + length_scale - one(j)
+
+            pixel_block = @view texture[i_start : i_end, j_start : j_end]
+
+            fill!(pixel_block, C(image[i, j]))
+        end
     end
 
-    return TextureIndex(start, height, width)
+    return TextureIndex(texture_start, frame_height, frame_width)
 end
 
 function get_texture(texture_atlas, texture_index; frame_number = 1)
