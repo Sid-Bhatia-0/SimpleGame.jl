@@ -109,6 +109,7 @@ function start()
     font_height = SD.get_height(font)
     font_width = SD.get_width(font)
 
+    show_debug_text = true
     debug_text_list = String[]
 
     # assets
@@ -139,6 +140,10 @@ function start()
             break
         end
 
+        if SI.went_down(user_input_state.keyboard_buttons[Int(GLFW.KEY_D) + 1])
+            show_debug_text = !show_debug_text
+        end
+
         layout.reference_bounding_box = SD.Rectangle(SD.Point(1, 1), image_height, image_width)
         empty!(debug_text_list)
 
@@ -158,13 +163,15 @@ function start()
         push!(debug_text_list, "average compute time spent per frame (averaged over previous $(length(frame_compute_time_buffer)) frames): $(round(sum(frame_compute_time_buffer) / (1e6 * length(frame_compute_time_buffer)), digits = 2)) ms")
         push!(debug_text_list, "average texture upload time spent per frame (averaged over previous $(length(texture_upload_time_buffer)) frames): $(round(sum(texture_upload_time_buffer) / (1e6 * length(texture_upload_time_buffer)), digits = 3)) ms")
 
-        for (j, text) in enumerate(debug_text_list)
-            SI.do_widget!(
-                SI.TEXT,
-                ui_context,
-                SI.WidgetID(@__FILE__, @__LINE__, j),
-                text;
-            )
+        if show_debug_text
+            for (j, text) in enumerate(debug_text_list)
+                SI.do_widget!(
+                    SI.TEXT,
+                    ui_context,
+                    SI.WidgetID(@__FILE__, @__LINE__, j),
+                    text;
+                )
+            end
         end
 
         SD.draw!(image, SD.Image(SD.Point(1, 1), background_image))
