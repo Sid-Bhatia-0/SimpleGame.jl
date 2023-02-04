@@ -166,9 +166,9 @@ function start()
 
         push!(debug_text_list, "previous frame number: $(i)")
 
-        push!(debug_text_list, "average total time spent per frame (averaged over previous $(length(frame_time_stamp_buffer) - 1) frames): $(round((last(frame_time_stamp_buffer) - first(frame_time_stamp_buffer)) / (1e6 * length(frame_time_stamp_buffer)), digits = 2)) ms")
-
-        push!(debug_text_list, "new method average total time spent per frame (averaged over previous $(length(frame_time_stamp_buffer) - 1) frames): $(round((last(frame_time_stamp_buffer) - first(frame_time_stamp_buffer)) / (1e6 * (length(frame_time_stamp_buffer) - 1)), digits = 2)) ms")
+        if length(frame_time_stamp_buffer) > 1
+            push!(debug_text_list, "average total time spent per frame (averaged over previous $(length(frame_time_stamp_buffer) - 1) frames): $(round((last(frame_time_stamp_buffer) - first(frame_time_stamp_buffer)) / (1e6 * (length(frame_time_stamp_buffer) - 1)), digits = 2)) ms")
+        end
 
         push!(debug_text_list, "sleep_time_observed - sleep_time_theoretical: $(round((sleep_time_observed - sleep_time_theoretical_seconds * 1e9) / 1e6, digits = 2)) ms")
 
