@@ -144,6 +144,10 @@ function start()
     check_box_value = false
     debug_text_list = String[]
 
+    # assets
+    background_image = map(x -> BinaryTransparentColor(convert(ColorTypes.RGBA{FPN.N0f8}, x)), FileIO.load("assets/background.png"))
+    burning_loop_animation = map(x -> BinaryTransparentColor(convert(ColorTypes.RGBA{FPN.N0f8}, x)), FileIO.load("assets/burning_loop_1.png"))
+
     ui_context = SI.UIContext(user_interaction_state, user_input_state, layout, COLORS, Any[])
 
     i = 0
@@ -172,8 +176,6 @@ function start()
         empty!(debug_text_list)
 
         compute_time_start = time_ns()
-
-        SD.draw!(image, SD.Background(), ui_context.colors[Integer(SI.COLOR_INDEX_BACKGROUND)])
 
         text = "Press the escape key to quit"
         SI.do_widget!(
@@ -380,6 +382,11 @@ function start()
                 )
             end
         end
+
+        SD.draw!(image, SD.Image(SD.Point(1, 1), background_image))
+
+        animation_frame = mod1(i, 8)
+        SD.draw!(image, SD.Image(SD.Point(540, 960), (@view burning_loop_animation[:, (animation_frame - 1) * 24 + 1 : animation_frame * 24])))
 
         for drawable in ui_context.draw_list
             SD.draw!(image, drawable)
