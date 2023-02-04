@@ -10,6 +10,7 @@ import FixedPointNumbers as FPN
 
 include("opengl_utils.jl")
 include("colors.jl")
+include("textures.jl")
 
 function SD.put_pixel_inbounds!(image, i, j, color::BinaryTransparentColor)
     if !iszero(CT.alpha(color.color))
@@ -113,7 +114,9 @@ function start()
     debug_text_list = String[]
 
     # assets
-    background_image = map(x -> BinaryTransparentColor(convert(CT.RGBA{FPN.N0f8}, x)), FileIO.load("assets/background.png"))
+    color_type = BinaryTransparentColor{CT.RGBA{FPN.N0f8}}
+    texture_atlas = TextureAtlas(color_type[])
+    background_ti = load_texture(texture_atlas, "assets/background.png")
     burning_loop_animation = map(x -> BinaryTransparentColor(convert(CT.RGBA{FPN.N0f8}, x)), FileIO.load("assets/burning_loop_1.png"))
 
     ui_context = SI.UIContext(user_interaction_state, user_input_state, layout, COLORS, Any[])
@@ -174,7 +177,7 @@ function start()
             end
         end
 
-        SD.draw!(image, SD.Image(SD.Point(1, 1), background_image))
+        SD.draw!(image, SD.Image(SD.Point(1, 1), get_texture(texture_atlas, background_ti)))
 
         animation_frame = mod1(i, 8)
         SD.draw!(image, SD.Image(SD.Point(540, 960), (@view burning_loop_animation[:, (animation_frame - 1) * 24 + 1 : animation_frame * 24])))
