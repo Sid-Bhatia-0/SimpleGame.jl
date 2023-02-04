@@ -5,14 +5,14 @@ import SimpleDraw as SD
 import SimpleIMGUI as SI
 import FileIO
 import ImageIO
-import ColorTypes
+import ColorTypes as CT
 import FixedPointNumbers as FPN
 
 include("opengl_utils.jl")
 include("colors.jl")
 
 function SD.put_pixel_inbounds!(image, i, j, color::BinaryTransparentColor)
-    if !iszero(ColorTypes.alpha(color.color))
+    if !iszero(CT.alpha(color.color))
         @inbounds image[i, j] = color.color
     end
 
@@ -36,7 +36,7 @@ function start()
     image_width = Int(video_mode.width)
     window_name = "Example"
 
-    image = zeros(ColorTypes.RGBA{FPN.N0f8}, image_height, image_width)
+    image = zeros(CT.RGBA{FPN.N0f8}, image_height, image_width)
 
     setup_window_hints()
     window = GLFW.CreateWindow(image_width, image_height, window_name, primary_monitor)
@@ -113,8 +113,8 @@ function start()
     debug_text_list = String[]
 
     # assets
-    background_image = map(x -> BinaryTransparentColor(convert(ColorTypes.RGBA{FPN.N0f8}, x)), FileIO.load("assets/background.png"))
-    burning_loop_animation = map(x -> BinaryTransparentColor(convert(ColorTypes.RGBA{FPN.N0f8}, x)), FileIO.load("assets/burning_loop_1.png"))
+    background_image = map(x -> BinaryTransparentColor(convert(CT.RGBA{FPN.N0f8}, x)), FileIO.load("assets/background.png"))
+    burning_loop_animation = map(x -> BinaryTransparentColor(convert(CT.RGBA{FPN.N0f8}, x)), FileIO.load("assets/burning_loop_1.png"))
 
     ui_context = SI.UIContext(user_interaction_state, user_input_state, layout, COLORS, Any[])
 
