@@ -12,38 +12,7 @@ include("opengl_utils.jl")
 include("colors.jl")
 include("textures.jl")
 include("entity_component_system.jl")
-
-function get_time(reference_time)
-    # get time since reference_time
-    # places an upper bound on how much time can the program be running until time wraps around giving meaningless values
-    # the conversion to Int will actually throw an error when that happens
-
-    t = time_ns()
-
-    if t >= reference_time
-        return Int(t - reference_time)
-    else
-        return Int(t + (typemax(t) - reference_time))
-    end
-end
-
-function SD.put_pixel_inbounds!(image, i, j, color::BinaryTransparentColor)
-    if !iszero(CT.alpha(color.color))
-        @inbounds image[i, j] = color.color
-    end
-
-    return nothing
-end
-
-function update_button(button, action)
-    if action == GLFW.PRESS
-        return SI.press(button)
-    elseif action == GLFW.RELEASE
-        return SI.release(button)
-    else
-        return button
-    end
-end
+include("utils.jl")
 
 function start()
     primary_monitor = GLFW.GetPrimaryMonitor()
@@ -121,10 +90,6 @@ function start()
 
     layout = SI.BoxLayout(SD.Rectangle(SD.Point(1, 1), image_height, image_width))
 
-    font = SD.TERMINUS_BOLD_24_12
-    font_height = SD.get_height(font)
-    font_width = SD.get_width(font)
-
     show_debug_text = true
     debug_text_list = String[]
 
@@ -189,6 +154,12 @@ function start()
 
         compute_time_start = get_time(reference_time)
 
+        simulation_time = min_ns_per_frame
+
+        animation_system!(entities, simulation_time)
+
+        drawing_system!(image, entities, texture_atlas)
+
         text = "Press the escape key to quit"
         SI.do_widget!(
             SI.TEXT,
@@ -197,10 +168,6 @@ function start()
             text;
             alignment = SI.UP1_LEFT1,
         )
-
-        simulation_time = min_ns_per_frame
-
-        animation_system!(entities, simulation_time)
 
         push!(debug_text_list, "previous frame number: $(i)")
 
@@ -230,8 +197,6 @@ function start()
                 )
             end
         end
-
-        drawing_system!(image, entities, texture_atlas)
 
         for drawable in ui_context.draw_list
             SD.draw!(image, drawable)

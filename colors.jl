@@ -1,6 +1,7 @@
 import ColorTypes as CT
 import Colors
 import FixedPointNumbers as FPN
+import SimpleDraw as SD
 import SimpleIMGUI as SI
 
 struct BinaryTransparentColor{C}
@@ -127,3 +128,11 @@ COLORS[Integer(SI.COLOR_INDEX_SLIDER_INDICATOR_ACTIVE)] = BinaryTransparentColor
 COLORS[Integer(SI.COLOR_INDEX_IMAGE_BORDER_NEUTRAL)] = COLORS[Integer(SI.COLOR_INDEX_BORDER)]
 COLORS[Integer(SI.COLOR_INDEX_IMAGE_BORDER_HOT)] = COLORS[Integer(SI.COLOR_INDEX_BORDER)]
 COLORS[Integer(SI.COLOR_INDEX_IMAGE_BORDER_ACTIVE)] = COLORS[Integer(SI.COLOR_INDEX_BORDER)]
+
+function SD.put_pixel_inbounds!(image, i, j, color::BinaryTransparentColor)
+    if !iszero(CT.alpha(color.color))
+        @inbounds image[i, j] = color.color
+    end
+
+    return nothing
+end
