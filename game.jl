@@ -14,6 +14,45 @@ include("textures.jl")
 include("entity_component_system.jl")
 include("utils.jl")
 
+const user_input_state = SI.UserInputState(
+    SI.Cursor(SD.Point(1, 1)),
+    fill(SI.InputButton(false, 0), 512),
+    fill(SI.InputButton(false, 0), 8),
+    Char[],
+)
+
+function cursor_position_callback(window, x, y)::Cvoid
+    user_input_state.cursor.position = SD.Point(round(Int, y, RoundDown) + 1, round(Int, x, RoundDown) + 1)
+
+    return nothing
+end
+
+function key_callback(window, key, scancode, action, mods)::Cvoid
+    if key == GLFW.KEY_UNKNOWN
+        @error "Unknown key pressed"
+    else
+        if key == GLFW.KEY_BACKSPACE && (action == GLFW.PRESS || action == GLFW.REPEAT)
+            push!(user_input_state.characters, '\b')
+        end
+
+        user_input_state.keyboard_buttons[Int(key) + 1] = update_button(user_input_state.keyboard_buttons[Int(key) + 1], action)
+    end
+
+    return nothing
+end
+
+function mouse_button_callback(window, button, action, mods)::Cvoid
+    user_input_state.mouse_buttons[Int(button) + 1] = update_button(user_input_state.mouse_buttons[Int(button) + 1], action)
+
+    return nothing
+end
+
+function character_callback(window, unicode_codepoint)::Cvoid
+    push!(user_input_state.characters, Char(unicode_codepoint))
+
+    return nothing
+end
+
 function start()
     primary_monitor = GLFW.GetPrimaryMonitor()
     video_mode = GLFW.GetVideoMode(primary_monitor)
@@ -26,45 +65,6 @@ function start()
     setup_window_hints()
     window = GLFW.CreateWindow(image_width, image_height, window_name, primary_monitor)
     GLFW.MakeContextCurrent(window)
-
-    user_input_state = SI.UserInputState(
-        SI.Cursor(SD.Point(1, 1)),
-        fill(SI.InputButton(false, 0), 512),
-        fill(SI.InputButton(false, 0), 8),
-        Char[],
-    )
-
-    function cursor_position_callback(window, x, y)::Cvoid
-        user_input_state.cursor.position = SD.Point(round(Int, y, RoundDown) + 1, round(Int, x, RoundDown) + 1)
-
-        return nothing
-    end
-
-    function key_callback(window, key, scancode, action, mods)::Cvoid
-        if key == GLFW.KEY_UNKNOWN
-            @error "Unknown key pressed"
-        else
-            if key == GLFW.KEY_BACKSPACE && (action == GLFW.PRESS || action == GLFW.REPEAT)
-                push!(user_input_state.characters, '\b')
-            end
-
-            user_input_state.keyboard_buttons[Int(key) + 1] = update_button(user_input_state.keyboard_buttons[Int(key) + 1], action)
-        end
-
-        return nothing
-    end
-
-    function mouse_button_callback(window, button, action, mods)::Cvoid
-        user_input_state.mouse_buttons[Int(button) + 1] = update_button(user_input_state.mouse_buttons[Int(button) + 1], action)
-
-        return nothing
-    end
-
-    function character_callback(window, unicode_codepoint)::Cvoid
-        push!(user_input_state.characters, Char(unicode_codepoint))
-
-        return nothing
-    end
 
     GLFW.SetCursorPosCallback(window, cursor_position_callback)
     GLFW.SetKeyCallback(window, key_callback)
