@@ -11,6 +11,7 @@ import FixedPointNumbers as FPN
 include("opengl_utils.jl")
 include("colors.jl")
 include("textures.jl")
+include("entity_component_system.jl")
 
 function get_time(reference_time)
     # get time since reference_time
@@ -130,8 +131,21 @@ function start()
     # assets
     color_type = BinaryTransparentColor{CT.RGBA{FPN.N0f8}}
     texture_atlas = TextureAtlas(color_type[])
-    background_ti = load_texture(texture_atlas, "assets/background.png")
-    burning_loop_animation_ti = load_texture(texture_atlas, "assets/burning_loop_1.png", num_frames = 8, length_scale = 4)
+
+    # entities
+    entities = Entity{Int}[]
+
+    add_entity!(entities, Entity(
+        true,
+        SD.Point(1, 1),
+        load_texture(texture_atlas, "assets/background.png"),
+    ))
+
+    add_entity!(entities, Entity(
+        true,
+        SD.Point(540, 960),
+        load_texture(texture_atlas, "assets/burning_loop_1.png", num_frames = 8, length_scale = 4),
+    ))
 
     ui_context = SI.UIContext(user_interaction_state, user_input_state, layout, COLORS, Any[])
 
@@ -184,6 +198,10 @@ function start()
             alignment = SI.UP1_LEFT1,
         )
 
+        simulation_time = min_ns_per_frame
+
+        animation_system!(entities, simulation_time)
+
         push!(debug_text_list, "previous frame number: $(i)")
 
         push!(debug_text_list, "average total time spent per frame (averaged over previous $(length(frame_time_stamp_buffer) - 1) frames): $(round((last(frame_time_stamp_buffer) - first(frame_time_stamp_buffer)) / (1e6 * (length(frame_time_stamp_buffer) - 1)), digits = 2)) ms")
@@ -193,6 +211,14 @@ function start()
         push!(debug_text_list, "average compute time spent per frame (averaged over previous $(length(frame_compute_time_buffer)) frames): $(round(sum(frame_compute_time_buffer) / (1e6 * length(frame_compute_time_buffer)), digits = 2)) ms")
 
         push!(debug_text_list, "average texture upload time spent per frame (averaged over previous $(length(texture_upload_time_buffer)) frames): $(round(sum(texture_upload_time_buffer) / (1e6 * length(texture_upload_time_buffer)), digits = 2)) ms")
+
+        push!(debug_text_list, "simulation_time: $(simulation_time)")
+
+        push!(debug_text_list, "entities[1]: $(entities[1])")
+
+        push!(debug_text_list, "entities[2]: $(entities[2])")
+
+        push!(debug_text_list, "length(entities): $(length(entities))")
 
         if show_debug_text
             for (j, text) in enumerate(debug_text_list)
@@ -205,10 +231,7 @@ function start()
             end
         end
 
-        SD.draw!(image, SD.Image(SD.Point(1, 1), get_texture(texture_atlas, background_ti)))
-
-        frame_number = mod1(i, 8)
-        SD.draw!(image, SD.Image(SD.Point(540, 960), get_texture(texture_atlas, burning_loop_animation_ti, frame_number = frame_number)))
+        drawing_system!(image, entities, texture_atlas)
 
         for drawable in ui_context.draw_list
             SD.draw!(image, drawable)
