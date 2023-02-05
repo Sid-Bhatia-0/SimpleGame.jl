@@ -27,14 +27,6 @@ function get_time(reference_time)
     end
 end
 
-function SD.put_pixel_inbounds!(image, i, j, color::BinaryTransparentColor)
-    if !iszero(CT.alpha(color.color))
-        @inbounds image[i, j] = color.color
-    end
-
-    return nothing
-end
-
 function update_button(button, action)
     if action == GLFW.PRESS
         return SI.press(button)
