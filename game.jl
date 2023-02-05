@@ -171,6 +171,8 @@ function start()
 
         animation_system!(entities, simulation_time)
 
+        drawing_system!(image, entities, texture_atlas)
+
         push!(debug_text_list, "previous frame number: $(i)")
 
         push!(debug_text_list, "average total time spent per frame (averaged over previous $(length(frame_time_stamp_buffer) - 1) frames): $(round((last(frame_time_stamp_buffer) - first(frame_time_stamp_buffer)) / (1e6 * (length(frame_time_stamp_buffer) - 1)), digits = 2)) ms")
@@ -199,8 +201,6 @@ function start()
                 )
             end
         end
-
-        drawing_system!(image, entities, texture_atlas)
 
         for drawable in ui_context.draw_list
             SD.draw!(image, drawable)
