@@ -158,7 +158,7 @@ function start()
 
         animation_system!(entities, simulation_time)
 
-        drawing_system!(image, entities, texture_atlas)
+        drawing_system!(ui_context.draw_list, entities, texture_atlas)
 
         text = "Press the escape key to quit"
         SI.do_widget!(

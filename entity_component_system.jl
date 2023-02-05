@@ -38,10 +38,10 @@ function animation_system!(entities, simulation_time)
     end
 end
 
-function drawing_system!(image, entities, texture_atlas)
+function drawing_system!(draw_list, entities, texture_atlas)
     for (i, entity) in enumerate(entities)
         if entity.is_alive
-            SD.draw!(image, SD.Image(entity.position, get_texture(texture_atlas, entity.sprite)))
+            push!(draw_list, SD.Image(entity.position, get_texture(texture_atlas, entity.sprite)))
         end
     end
 end
