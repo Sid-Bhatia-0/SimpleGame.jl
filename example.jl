@@ -137,7 +137,8 @@ function start()
     sprites = [background_sprite, fire_sprite]
 
     # entities
-    entity_data = EntityData()
+    max_entities = 1024
+    entity_data = fill(get_null(Entity{Int}), max_entities)
 
     ui_context = SI.UIContext(user_interaction_state, user_input_state, layout, COLORS, Any[])
 
