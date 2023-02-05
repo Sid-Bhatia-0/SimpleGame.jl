@@ -112,7 +112,9 @@ function start()
         load_texture(texture_atlas, "assets/burning_loop_1.png", num_frames = 8, length_scale = 4),
     ))
 
-    ui_context = SI.UIContext(user_interaction_state, user_input_state, layout, COLORS, Any[])
+    draw_list = Any[]
+
+    ui_context = SI.UIContext(user_interaction_state, user_input_state, layout, COLORS, draw_list)
 
     i = 0
 
@@ -158,7 +160,7 @@ function start()
 
         animation_system!(entities, simulation_time)
 
-        drawing_system!(ui_context.draw_list, entities, texture_atlas)
+        drawing_system!(draw_list, entities, texture_atlas)
 
         text = "Press the escape key to quit"
         SI.do_widget!(
@@ -198,10 +200,10 @@ function start()
             end
         end
 
-        for drawable in ui_context.draw_list
+        for drawable in draw_list
             SD.draw!(image, drawable)
         end
-        empty!(ui_context.draw_list)
+        empty!(draw_list)
 
         compute_time_end = get_time(reference_time)
         push!(frame_compute_time_buffer, compute_time_end - compute_time_start)
