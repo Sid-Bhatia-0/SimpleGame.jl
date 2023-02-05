@@ -1,12 +1,10 @@
-struct TextureIndex{I}
+struct Sprite{I}
     start::I
     height::I
     width::I
-end
-
-struct AnimationState{I}
+    frame_number::I
     num_frames::I
-    animation_speed::I
+    time_per_frame::I
     time_alive::I
 end
 
@@ -14,30 +12,29 @@ struct TextureAtlas{C}
     data::Vector{C}
 end
 
-function load_texture(texture_atlas, filename; num_frames = 1, length_scale = 1)
+function load_texture(texture_atlas, filename; num_frames = 1, length_scale = 1, time_per_frame = 100_000_000, time_alive = 1)
     texture_data = texture_atlas.data
-
-    image = FileIO.load(filename)
-
-    texture_start = length(texture_data) + 1
-    image_height, image_width = size(image)
-
-    @assert image_width % num_frames == 0
-    frame_height = image_height * length_scale
-    frame_width = (image_width ÷ num_frames) * length_scale
-
     C = eltype(texture_atlas.data)
 
-    resize!(texture_data, length(texture_data) + image_height * length_scale * image_width * length_scale)
+    image = FileIO.load(filename)
+    image_height, image_width = size(image)
+
+    sprite_start = length(texture_data) + 1
+
+    @assert iszero(mod(image_width, num_frames))
+    sprite_height = image_height * length_scale
+    sprite_width = (image_width ÷ num_frames) * length_scale
+
+    resize!(texture_data, length(texture_data) + sprite_height * sprite_width * num_frames)
 
     texture = reshape(
-        @view(texture_data[texture_start : texture_start + image_height * length_scale * image_width * length_scale - one(texture_start)]),
-        image_height * length_scale,
-        image_width * length_scale,
+        @view(texture_data[sprite_start : sprite_start + sprite_height * sprite_width * num_frames - one(sprite_start)]),
+        sprite_height,
+        sprite_width * num_frames,
     )
 
-    for j in 1:image_width
-        for i in 1:image_height
+    for j in axes(image, 2)
+        for i in axes(image, 1)
             i_start = (i - one(i)) * length_scale + one(i)
             i_end = i_start + length_scale - one(i)
 
@@ -50,17 +47,54 @@ function load_texture(texture_atlas, filename; num_frames = 1, length_scale = 1)
         end
     end
 
-    return TextureIndex(texture_start, frame_height, frame_width)
+    return Sprite(
+        sprite_start,
+        sprite_height,
+        sprite_width,
+        one(sprite_start),
+        num_frames,
+        time_per_frame,
+        time_alive,
+    )
 end
 
-function get_texture(texture_atlas, texture_index; frame_number = 1)
-    start = texture_index.start
-    height = texture_index.height
-    width = texture_index.width
+function get_texture(texture_atlas, sprite)
+    start = sprite.start
+    height = sprite.height
+    width = sprite.width
+    frame_number = sprite.frame_number
 
     start = start + (frame_number - one(frame_number)) * height * width
 
     image_view = @view texture_atlas.data[start : start + height * width - one(start)]
 
     return reshape(image_view, height, width)
+end
+
+function animate(sprite, simulation_time)
+    start = sprite.start
+    height = sprite.height
+    width = sprite.width
+    frame_number = sprite.frame_number
+    num_frames = sprite.num_frames
+    time_per_frame = sprite.time_per_frame
+    time_alive = sprite.time_alive
+
+    if num_frames == one(num_frames)
+        return sprite
+    else
+        time_alive = time_alive + simulation_time
+        time_alive_wrapped = mod1(time_alive, num_frames * time_per_frame)
+        frame_number = div(time_alive_wrapped, time_per_frame, RoundUp)
+
+        return Sprite(
+            start,
+            height,
+            width,
+            frame_number,
+            num_frames,
+            time_per_frame,
+            time_alive,
+        )
+    end
 end

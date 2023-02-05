@@ -131,8 +131,10 @@ function start()
     # assets
     color_type = BinaryTransparentColor{CT.RGBA{FPN.N0f8}}
     texture_atlas = TextureAtlas(color_type[])
-    background_ti = load_texture(texture_atlas, "assets/background.png")
-    burning_loop_animation_ti = load_texture(texture_atlas, "assets/burning_loop_1.png", num_frames = 8, length_scale = 4)
+    background_sprite = load_texture(texture_atlas, "assets/background.png")
+    fire_sprite = load_texture(texture_atlas, "assets/burning_loop_1.png", num_frames = 8, length_scale = 4)
+
+    sprites = [background_sprite, fire_sprite]
 
     # entities
     entity_data = EntityData()
@@ -188,6 +190,12 @@ function start()
             alignment = SI.UP1_LEFT1,
         )
 
+        simulation_time = min_ns_per_frame
+
+        for (k, sprite) in enumerate(sprites)
+            sprites[k] = animate(sprite, simulation_time)
+        end
+
         push!(debug_text_list, "previous frame number: $(i)")
 
         push!(debug_text_list, "average total time spent per frame (averaged over previous $(length(frame_time_stamp_buffer) - 1) frames): $(round((last(frame_time_stamp_buffer) - first(frame_time_stamp_buffer)) / (1e6 * (length(frame_time_stamp_buffer) - 1)), digits = 2)) ms")
@@ -197,6 +205,12 @@ function start()
         push!(debug_text_list, "average compute time spent per frame (averaged over previous $(length(frame_compute_time_buffer)) frames): $(round(sum(frame_compute_time_buffer) / (1e6 * length(frame_compute_time_buffer)), digits = 2)) ms")
 
         push!(debug_text_list, "average texture upload time spent per frame (averaged over previous $(length(texture_upload_time_buffer)) frames): $(round(sum(texture_upload_time_buffer) / (1e6 * length(texture_upload_time_buffer)), digits = 2)) ms")
+
+        push!(debug_text_list, "simulation_time: $(simulation_time)")
+
+        push!(debug_text_list, "sprites[1]: $(sprites[1])")
+
+        push!(debug_text_list, "sprites[2]: $(sprites[2])")
 
         if show_debug_text
             for (j, text) in enumerate(debug_text_list)
@@ -209,10 +223,9 @@ function start()
             end
         end
 
-        SD.draw!(image, SD.Image(SD.Point(1, 1), get_texture(texture_atlas, background_ti)))
+        SD.draw!(image, SD.Image(SD.Point(1, 1), get_texture(texture_atlas, sprites[1])))
 
-        frame_number = mod1(i, 8)
-        SD.draw!(image, SD.Image(SD.Point(540, 960), get_texture(texture_atlas, burning_loop_animation_ti, frame_number = frame_number)))
+        SD.draw!(image, SD.Image(SD.Point(540, 960), get_texture(texture_atlas, sprites[2])))
 
         for drawable in ui_context.draw_list
             SD.draw!(image, drawable)
