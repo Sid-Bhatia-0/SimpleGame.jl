@@ -1,22 +1,7 @@
 struct Entity{I}
     is_alive::Bool
+    position::SD.Point{I}
     sprite::Sprite{I}
-end
-
-function get_null(::Type{Entity{I}}) where {I}
-    is_alive = false
-
-    sprite = Sprite(
-        zero(I),
-        zero(I),
-        zero(I),
-        zero(I),
-        zero(I),
-        zero(I),
-        zero(I),
-    )
-
-    return Entity(is_alive, sprite)
 end
 
 function add_entity!(entities, entity)
@@ -33,12 +18,14 @@ end
 
 function animate(entity::Entity, simulation_time)
     is_alive = entity.is_alive
+    position = entity.position
     sprite = entity.sprite
 
     new_sprite = animate(sprite, simulation_time)
 
     return Entity(
         is_alive,
+        position,
         new_sprite,
     )
 end
@@ -47,6 +34,14 @@ function animation_system!(entities, simulation_time)
     for (i, entity) in enumerate(entities)
         if entity.is_alive
             entities[i] = animate(entity, simulation_time)
+        end
+    end
+end
+
+function drawing_system!(image, entities, texture_atlas)
+    for (i, entity) in enumerate(entities)
+        if entity.is_alive
+            SD.draw!(image, SD.Image(entity.position, get_texture(texture_atlas, entity.sprite)))
         end
     end
 end

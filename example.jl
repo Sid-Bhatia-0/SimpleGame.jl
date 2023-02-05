@@ -133,15 +133,17 @@ function start()
     texture_atlas = TextureAtlas(color_type[])
 
     # entities
-    entities = fill(get_null(Entity{Int}), 1)
+    entities = Entity{Int}[]
 
     add_entity!(entities, Entity(
         true,
+        SD.Point(1, 1),
         load_texture(texture_atlas, "assets/background.png"),
     ))
 
     add_entity!(entities, Entity(
         true,
+        SD.Point(540, 960),
         load_texture(texture_atlas, "assets/burning_loop_1.png", num_frames = 8, length_scale = 4),
     ))
 
@@ -229,9 +231,7 @@ function start()
             end
         end
 
-        SD.draw!(image, SD.Image(SD.Point(1, 1), get_texture(texture_atlas, entities[1].sprite)))
-
-        SD.draw!(image, SD.Image(SD.Point(540, 960), get_texture(texture_atlas, entities[2].sprite)))
+        drawing_system!(image, entities, texture_atlas)
 
         for drawable in ui_context.draw_list
             SD.draw!(image, drawable)
