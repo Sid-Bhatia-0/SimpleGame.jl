@@ -90,10 +90,6 @@ function start()
 
     layout = SI.BoxLayout(SD.Rectangle(SD.Point(1, 1), image_height, image_width))
 
-    font = SD.TERMINUS_BOLD_24_12
-    font_height = SD.get_height(font)
-    font_width = SD.get_width(font)
-
     show_debug_text = true
     debug_text_list = String[]
 
