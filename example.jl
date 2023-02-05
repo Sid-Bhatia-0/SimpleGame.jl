@@ -12,6 +12,20 @@ include("opengl_utils.jl")
 include("colors.jl")
 include("textures.jl")
 
+function get_time(reference_time)
+    # get time since reference_time
+    # places an upper bound on how much time can the program be running until time wraps around giving meaningless values
+    # the conversion to Int will actually throw an error when that happens
+
+    t = time_ns()
+
+    if t >= reference_time
+        return Int(t - reference_time)
+    else
+        return Int(t + (typemax(t) - reference_time))
+    end
+end
+
 function SD.put_pixel_inbounds!(image, i, j, color::BinaryTransparentColor)
     if !iszero(CT.alpha(color.color))
         @inbounds image[i, j] = color.color
@@ -126,16 +140,25 @@ function start()
     sliding_window_size = 30
 
     max_frames_per_second = 60
-    min_seconds_per_frame = 1 / max_frames_per_second
+    min_ns_per_frame = 1_000_000_000 ÷ max_frames_per_second
 
-    frame_time_stamp_buffer = DS.CircularBuffer{typeof(time_ns())}(sliding_window_size)
-    push!(frame_time_stamp_buffer, time_ns())
+    reference_time = time_ns()
 
-    frame_compute_time_buffer = DS.CircularBuffer{typeof(time_ns())}(sliding_window_size)
-    push!(frame_compute_time_buffer, zero(UInt))
+    frame_time_stamp_buffer = DS.CircularBuffer{Int}(sliding_window_size + 1)
+    push!(frame_time_stamp_buffer, 0)
+    push!(frame_time_stamp_buffer, 1)
 
-    texture_upload_time_buffer = DS.CircularBuffer{typeof(time_ns())}(sliding_window_size)
-    push!(texture_upload_time_buffer, zero(UInt))
+    frame_compute_time_buffer = DS.CircularBuffer{Int}(sliding_window_size)
+    push!(frame_compute_time_buffer, 0)
+
+    texture_upload_time_buffer = DS.CircularBuffer{Int}(sliding_window_size)
+    push!(texture_upload_time_buffer, 0)
+
+    sleep_time_theoretical_buffer = DS.CircularBuffer{Int}(sliding_window_size)
+    push!(sleep_time_theoretical_buffer, 0)
+
+    sleep_time_observed_buffer = DS.CircularBuffer{Int}(sliding_window_size)
+    push!(sleep_time_observed_buffer, 0)
 
     while !GLFW.WindowShouldClose(window)
         if SI.went_down(user_input_state.keyboard_buttons[Int(GLFW.KEY_ESCAPE) + 1])
@@ -150,7 +173,7 @@ function start()
         layout.reference_bounding_box = SD.Rectangle(SD.Point(1, 1), image_height, image_width)
         empty!(debug_text_list)
 
-        compute_time_start = time_ns()
+        compute_time_start = get_time(reference_time)
 
         text = "Press the escape key to quit"
         SI.do_widget!(
@@ -162,9 +185,14 @@ function start()
         )
 
         push!(debug_text_list, "previous frame number: $(i)")
-        push!(debug_text_list, "average total time spent per frame (averaged over previous $(length(frame_time_stamp_buffer)) frames): $(round((last(frame_time_stamp_buffer) - first(frame_time_stamp_buffer)) / (1e6 * length(frame_time_stamp_buffer)), digits = 2)) ms")
+
+        push!(debug_text_list, "average total time spent per frame (averaged over previous $(length(frame_time_stamp_buffer) - 1) frames): $(round((last(frame_time_stamp_buffer) - first(frame_time_stamp_buffer)) / (1e6 * (length(frame_time_stamp_buffer) - 1)), digits = 2)) ms")
+
+        push!(debug_text_list, "(avg. sleep time observed) - (avg. sleep time theoretical): $(round(sum(sleep_time_observed_buffer) / (1e6 * length(sleep_time_observed_buffer)) - sum(sleep_time_theoretical_buffer) / (1e6 * length(sleep_time_theoretical_buffer)), digits = 2)) ms")
+
         push!(debug_text_list, "average compute time spent per frame (averaged over previous $(length(frame_compute_time_buffer)) frames): $(round(sum(frame_compute_time_buffer) / (1e6 * length(frame_compute_time_buffer)), digits = 2)) ms")
-        push!(debug_text_list, "average texture upload time spent per frame (averaged over previous $(length(texture_upload_time_buffer)) frames): $(round(sum(texture_upload_time_buffer) / (1e6 * length(texture_upload_time_buffer)), digits = 3)) ms")
+
+        push!(debug_text_list, "average texture upload time spent per frame (averaged over previous $(length(texture_upload_time_buffer)) frames): $(round(sum(texture_upload_time_buffer) / (1e6 * length(texture_upload_time_buffer)), digits = 2)) ms")
 
         if show_debug_text
             for (j, text) in enumerate(debug_text_list)
@@ -187,12 +215,12 @@ function start()
         end
         empty!(ui_context.draw_list)
 
-        compute_time_end = time_ns()
+        compute_time_end = get_time(reference_time)
         push!(frame_compute_time_buffer, compute_time_end - compute_time_start)
 
-        texture_upload_start_time = time_ns()
+        texture_upload_start_time = get_time(reference_time)
         update_back_buffer(image)
-        texture_upload_end_time = time_ns()
+        texture_upload_end_time = get_time(reference_time)
         push!(texture_upload_time_buffer, texture_upload_end_time - texture_upload_start_time)
 
         GLFW.SwapBuffers(window)
@@ -203,9 +231,17 @@ function start()
 
         i = i + 1
 
-        sleep(max(0.0, min_seconds_per_frame - (time_ns() - last(frame_time_stamp_buffer)) / 1e9))
+        sleep_time_theoretical = max(0, min_ns_per_frame - (get_time(reference_time) - last(frame_time_stamp_buffer)))
+        push!(sleep_time_theoretical_buffer, sleep_time_theoretical)
 
-        push!(frame_time_stamp_buffer, time_ns())
+        sleep_start_time = get_time(reference_time)
+        sleep(sleep_time_theoretical / 1e9)
+        sleep_end_time = get_time(reference_time)
+
+        sleep_time_observed = (sleep_end_time - sleep_start_time)
+        push!(sleep_time_observed_buffer, sleep_time_observed)
+
+        push!(frame_time_stamp_buffer, get_time(reference_time))
     end
 
     MGL.glDeleteVertexArrays(1, VAO_ref)
