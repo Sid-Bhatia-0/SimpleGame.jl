@@ -11,6 +11,7 @@ import FixedPointNumbers as FPN
 include("opengl_utils.jl")
 include("colors.jl")
 include("textures.jl")
+include("entity_component_system.jl")
 
 function get_time(reference_time)
     # get time since reference_time
@@ -132,6 +133,9 @@ function start()
     texture_atlas = TextureAtlas(color_type[])
     background_ti = load_texture(texture_atlas, "assets/background.png")
     burning_loop_animation_ti = load_texture(texture_atlas, "assets/burning_loop_1.png", num_frames = 8, length_scale = 4)
+
+    # entities
+    entity_data = EntityData()
 
     ui_context = SI.UIContext(user_interaction_state, user_input_state, layout, COLORS, Any[])
 

@@ -4,6 +4,12 @@ struct TextureIndex{I}
     width::I
 end
 
+struct AnimationState{I}
+    num_frames::I
+    animation_speed::I
+    time_alive::I
+end
+
 struct TextureAtlas{C}
     data::Vector{C}
 end
