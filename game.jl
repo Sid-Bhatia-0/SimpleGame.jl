@@ -158,6 +158,12 @@ function start()
 
         compute_time_start = get_time(reference_time)
 
+        simulation_time = min_ns_per_frame
+
+        animation_system!(entities, simulation_time)
+
+        drawing_system!(image, entities, texture_atlas)
+
         text = "Press the escape key to quit"
         SI.do_widget!(
             SI.TEXT,
@@ -166,12 +172,6 @@ function start()
             text;
             alignment = SI.UP1_LEFT1,
         )
-
-        simulation_time = min_ns_per_frame
-
-        animation_system!(entities, simulation_time)
-
-        drawing_system!(image, entities, texture_atlas)
 
         push!(debug_text_list, "previous frame number: $(i)")
 
