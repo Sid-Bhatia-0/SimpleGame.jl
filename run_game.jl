@@ -13,9 +13,46 @@ const IS_DEBUG = true
 mutable struct DebugInfo
     show_messages::Bool
     messages::Vector{String}
+    frame_time_stamp_buffer::DS.CircularBuffer{Int}
+    frame_compute_time_buffer::DS.CircularBuffer{Int}
+    texture_upload_time_buffer::DS.CircularBuffer{Int}
+    sleep_time_theoretical_buffer::DS.CircularBuffer{Int}
+    sleep_time_observed_buffer::DS.CircularBuffer{Int}
 end
 
-const DEBUG_INFO = DebugInfo(true, String[])
+function DebugInfo()
+    show_messages = true
+    messages = String[]
+    sliding_window_size = 30
+
+    frame_time_stamp_buffer = DS.CircularBuffer{Int}(sliding_window_size + 1)
+    push!(frame_time_stamp_buffer, 0)
+    push!(frame_time_stamp_buffer, 1)
+
+    frame_compute_time_buffer = DS.CircularBuffer{Int}(sliding_window_size)
+    push!(frame_compute_time_buffer, 0)
+
+    texture_upload_time_buffer = DS.CircularBuffer{Int}(sliding_window_size)
+    push!(texture_upload_time_buffer, 0)
+
+    sleep_time_theoretical_buffer = DS.CircularBuffer{Int}(sliding_window_size)
+    push!(sleep_time_theoretical_buffer, 0)
+
+    sleep_time_observed_buffer = DS.CircularBuffer{Int}(sliding_window_size)
+    push!(sleep_time_observed_buffer, 0)
+
+    return DebugInfo(
+        show_messages,
+        messages,
+        frame_time_stamp_buffer,
+        frame_compute_time_buffer,
+        texture_upload_time_buffer,
+        sleep_time_theoretical_buffer,
+        sleep_time_observed_buffer,
+    )
+end
+
+const DEBUG_INFO = DebugInfo()
 
 include("opengl_utils.jl")
 include("colors.jl")
@@ -126,30 +163,14 @@ function start()
 
     i = 0
 
-    sliding_window_size = 30
-
     max_frames_per_second = 60
     min_ns_per_frame = 1_000_000_000 ÷ max_frames_per_second
 
     reference_time = time_ns()
 
-    frame_time_stamp_buffer = DS.CircularBuffer{Int}(sliding_window_size + 1)
-    push!(frame_time_stamp_buffer, 0)
-    push!(frame_time_stamp_buffer, 1)
-
-    frame_compute_time_buffer = DS.CircularBuffer{Int}(sliding_window_size)
-    push!(frame_compute_time_buffer, 0)
-
-    texture_upload_time_buffer = DS.CircularBuffer{Int}(sliding_window_size)
-    push!(texture_upload_time_buffer, 0)
-
-    sleep_time_theoretical_buffer = DS.CircularBuffer{Int}(sliding_window_size)
-    push!(sleep_time_theoretical_buffer, 0)
-
-    sleep_time_observed_buffer = DS.CircularBuffer{Int}(sliding_window_size)
-    push!(sleep_time_observed_buffer, 0)
-
     while !GLFW.WindowShouldClose(window)
+        frame_start_time = get_time(reference_time)
+
         if SI.went_down(user_input_state.keyboard_buttons[Int(GLFW.KEY_ESCAPE) + 1])
             GLFW.SetWindowShouldClose(window, true)
             break
@@ -162,7 +183,9 @@ function start()
         end
 
         layout.reference_bounding_box = SD.Rectangle(SD.Point(1, 1), image_height, image_width)
-        empty!(DEBUG_INFO.messages)
+        if IS_DEBUG
+            empty!(DEBUG_INFO.messages)
+        end
 
         compute_time_start = get_time(reference_time)
 
@@ -177,13 +200,13 @@ function start()
 
             push!(DEBUG_INFO.messages, "previous frame number: $(i)")
 
-            push!(DEBUG_INFO.messages, "average total time spent per frame (averaged over previous $(length(frame_time_stamp_buffer) - 1) frames): $(round((last(frame_time_stamp_buffer) - first(frame_time_stamp_buffer)) / (1e6 * (length(frame_time_stamp_buffer) - 1)), digits = 2)) ms")
+            push!(DEBUG_INFO.messages, "average total time spent per frame (averaged over previous $(length(DEBUG_INFO.frame_time_stamp_buffer) - 1) frames): $(round((last(DEBUG_INFO.frame_time_stamp_buffer) - first(DEBUG_INFO.frame_time_stamp_buffer)) / (1e6 * (length(DEBUG_INFO.frame_time_stamp_buffer) - 1)), digits = 2)) ms")
 
-            push!(DEBUG_INFO.messages, "(avg. sleep time observed) - (avg. sleep time theoretical): $(round(sum(sleep_time_observed_buffer) / (1e6 * length(sleep_time_observed_buffer)) - sum(sleep_time_theoretical_buffer) / (1e6 * length(sleep_time_theoretical_buffer)), digits = 2)) ms")
+            push!(DEBUG_INFO.messages, "(avg. sleep time observed) - (avg. sleep time theoretical): $(round(sum(DEBUG_INFO.sleep_time_observed_buffer) / (1e6 * length(DEBUG_INFO.sleep_time_observed_buffer)) - sum(DEBUG_INFO.sleep_time_theoretical_buffer) / (1e6 * length(DEBUG_INFO.sleep_time_theoretical_buffer)), digits = 2)) ms")
 
-            push!(DEBUG_INFO.messages, "average compute time spent per frame (averaged over previous $(length(frame_compute_time_buffer)) frames): $(round(sum(frame_compute_time_buffer) / (1e6 * length(frame_compute_time_buffer)), digits = 2)) ms")
+            push!(DEBUG_INFO.messages, "average compute time spent per frame (averaged over previous $(length(DEBUG_INFO.frame_compute_time_buffer)) frames): $(round(sum(DEBUG_INFO.frame_compute_time_buffer) / (1e6 * length(DEBUG_INFO.frame_compute_time_buffer)), digits = 2)) ms")
 
-            push!(DEBUG_INFO.messages, "average texture upload time spent per frame (averaged over previous $(length(texture_upload_time_buffer)) frames): $(round(sum(texture_upload_time_buffer) / (1e6 * length(texture_upload_time_buffer)), digits = 2)) ms")
+            push!(DEBUG_INFO.messages, "average texture upload time spent per frame (averaged over previous $(length(DEBUG_INFO.texture_upload_time_buffer)) frames): $(round(sum(DEBUG_INFO.texture_upload_time_buffer) / (1e6 * length(DEBUG_INFO.texture_upload_time_buffer)), digits = 2)) ms")
 
             push!(DEBUG_INFO.messages, "simulation_time: $(simulation_time)")
 
@@ -218,12 +241,16 @@ function start()
         empty!(draw_list)
 
         compute_time_end = get_time(reference_time)
-        push!(frame_compute_time_buffer, compute_time_end - compute_time_start)
+        if IS_DEBUG
+            push!(DEBUG_INFO.frame_compute_time_buffer, compute_time_end - compute_time_start)
+        end
 
         texture_upload_start_time = get_time(reference_time)
         update_back_buffer(image)
         texture_upload_end_time = get_time(reference_time)
-        push!(texture_upload_time_buffer, texture_upload_end_time - texture_upload_start_time)
+        if IS_DEBUG
+            push!(DEBUG_INFO.texture_upload_time_buffer, texture_upload_end_time - texture_upload_start_time)
+        end
 
         GLFW.SwapBuffers(window)
 
@@ -233,17 +260,20 @@ function start()
 
         i = i + 1
 
-        sleep_time_theoretical = max(0, min_ns_per_frame - (get_time(reference_time) - last(frame_time_stamp_buffer)))
-        push!(sleep_time_theoretical_buffer, sleep_time_theoretical)
+        sleep_time_theoretical = max(0, min_ns_per_frame - (get_time(reference_time) - frame_start_time))
 
         sleep_start_time = get_time(reference_time)
         sleep(sleep_time_theoretical / 1e9)
         sleep_end_time = get_time(reference_time)
 
-        sleep_time_observed = (sleep_end_time - sleep_start_time)
-        push!(sleep_time_observed_buffer, sleep_time_observed)
+        if IS_DEBUG
+            push!(DEBUG_INFO.sleep_time_theoretical_buffer, sleep_time_theoretical)
 
-        push!(frame_time_stamp_buffer, get_time(reference_time))
+            sleep_time_observed = (sleep_end_time - sleep_start_time)
+            push!(DEBUG_INFO.sleep_time_observed_buffer, sleep_time_observed)
+
+            push!(DEBUG_INFO.frame_time_stamp_buffer, get_time(reference_time))
+        end
     end
 
     MGL.glDeleteVertexArrays(1, VAO_ref)
