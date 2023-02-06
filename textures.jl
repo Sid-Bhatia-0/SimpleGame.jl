@@ -71,6 +71,12 @@ function get_texture(texture_atlas, sprite)
     return reshape(image_view, height, width)
 end
 
+function get_frame_number(time_alive, num_frames, time_per_frame)
+    time_alive_wrapped = mod1(time_alive, num_frames * time_per_frame)
+    frame_number = div(time_alive_wrapped, time_per_frame, RoundUp)
+    return frame_number
+end
+
 function animate(sprite, simulation_time)
     start = sprite.start
     height = sprite.height
@@ -81,8 +87,7 @@ function animate(sprite, simulation_time)
     time_alive = sprite.time_alive
 
     time_alive = time_alive + simulation_time
-    time_alive_wrapped = mod1(time_alive, num_frames * time_per_frame)
-    frame_number = div(time_alive_wrapped, time_per_frame, RoundUp)
+    get_frame_number(time_alive, num_frames, time_per_frame)
 
     return Sprite(
         start,
