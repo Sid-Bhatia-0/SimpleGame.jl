@@ -173,15 +173,7 @@ function start()
         drawing_system!(draw_list, entities, texture_atlas)
 
         if IS_DEBUG
-            if DEBUG_INFO.show_messages
-                SI.do_widget!(
-                    SI.TEXT,
-                    ui_context,
-                    SI.WidgetID(@__FILE__, @__LINE__, 1),
-                    "Press the escape key to quit";
-                    alignment = SI.UP1_LEFT1,
-                )
-            end
+            push!(DEBUG_INFO.messages, "Press the escape key to quit")
 
             push!(DEBUG_INFO.messages, "previous frame number: $(i)")
 
@@ -203,11 +195,18 @@ function start()
 
             if DEBUG_INFO.show_messages
                 for (j, text) in enumerate(DEBUG_INFO.messages)
+                    if isone(j)
+                        alignment = SI.UP1_LEFT1
+                    else
+                        alignment = SI.DOWN2_LEFT1
+                    end
+
                     SI.do_widget!(
                         SI.TEXT,
                         ui_context,
                         SI.WidgetID(@__FILE__, @__LINE__, j),
                         text;
+                        alignment = alignment,
                     )
                 end
             end
