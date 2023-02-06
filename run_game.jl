@@ -104,12 +104,14 @@ function start()
         true,
         SD.Point(1, 1),
         load_texture(texture_atlas, "assets/background.png"),
+        null(AnimationState{Int}),
     ))
 
     add_entity!(entities, Entity(
         true,
         SD.Point(540, 960),
-        load_texture(texture_atlas, "assets/burning_loop_1.png", num_frames = 8, length_scale = 4),
+        load_texture(texture_atlas, "assets/burning_loop_1.png", length_scale = 4),
+        AnimationState(1, 8, 100_000_000, 1),
     ))
 
     draw_list = Any[]
