@@ -8,6 +8,15 @@ import ImageIO
 import ColorTypes as CT
 import FixedPointNumbers as FPN
 
+const IS_DEBUG = true
+
+mutable struct DebugInfo
+    show_messages::Bool
+    messages::Vector{String}
+end
+
+const DEBUG_INFO = DebugInfo(true, String[])
+
 include("opengl_utils.jl")
 include("colors.jl")
 include("textures.jl")
@@ -90,7 +99,6 @@ function start()
 
     layout = SI.BoxLayout(SD.Rectangle(SD.Point(1, 1), image_height, image_width))
 
-    show_debug_text = true
     debug_text_list = String[]
 
     # assets
@@ -150,7 +158,7 @@ function start()
         end
 
         if SI.went_down(user_input_state.keyboard_buttons[Int(GLFW.KEY_D) + 1])
-            show_debug_text = !show_debug_text
+            DEBUG_INFO.show_messages = !DEBUG_INFO.show_messages
         end
 
         layout.reference_bounding_box = SD.Rectangle(SD.Point(1, 1), image_height, image_width)
@@ -191,7 +199,7 @@ function start()
 
         push!(debug_text_list, "length(entities): $(length(entities))")
 
-        if show_debug_text
+        if DEBUG_INFO.show_messages
             for (j, text) in enumerate(debug_text_list)
                 SI.do_widget!(
                     SI.TEXT,
