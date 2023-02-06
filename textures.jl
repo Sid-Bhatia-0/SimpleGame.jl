@@ -80,21 +80,17 @@ function animate(sprite, simulation_time)
     time_per_frame = sprite.time_per_frame
     time_alive = sprite.time_alive
 
-    if num_frames == one(num_frames)
-        return sprite
-    else
-        time_alive = time_alive + simulation_time
-        time_alive_wrapped = mod1(time_alive, num_frames * time_per_frame)
-        frame_number = div(time_alive_wrapped, time_per_frame, RoundUp)
+    time_alive = time_alive + simulation_time
+    time_alive_wrapped = mod1(time_alive, num_frames * time_per_frame)
+    frame_number = div(time_alive_wrapped, time_per_frame, RoundUp)
 
-        return Sprite(
-            start,
-            height,
-            width,
-            frame_number,
-            num_frames,
-            time_per_frame,
-            time_alive,
-        )
-    end
+    return Sprite(
+        start,
+        height,
+        width,
+        frame_number,
+        num_frames,
+        time_per_frame,
+        time_alive,
+    )
 end
