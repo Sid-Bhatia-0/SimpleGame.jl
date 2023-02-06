@@ -8,7 +8,7 @@ import ImageIO
 import ColorTypes as CT
 import FixedPointNumbers as FPN
 
-const IS_DEBUG = true
+const IS_DEBUG = false
 
 mutable struct DebugInfo
     show_messages::Bool
@@ -99,8 +99,6 @@ function start()
 
     layout = SI.BoxLayout(SD.Rectangle(SD.Point(1, 1), image_height, image_width))
 
-    debug_text_list = String[]
-
     # assets
     color_type = BinaryTransparentColor{CT.RGBA{FPN.N0f8}}
     texture_atlas = TextureAtlas(color_type[])
@@ -158,11 +156,13 @@ function start()
         end
 
         if SI.went_down(user_input_state.keyboard_buttons[Int(GLFW.KEY_D) + 1])
-            DEBUG_INFO.show_messages = !DEBUG_INFO.show_messages
+            if IS_DEBUG
+                DEBUG_INFO.show_messages = !DEBUG_INFO.show_messages
+            end
         end
 
         layout.reference_bounding_box = SD.Rectangle(SD.Point(1, 1), image_height, image_width)
-        empty!(debug_text_list)
+        empty!(DEBUG_INFO.messages)
 
         compute_time_start = get_time(reference_time)
 
@@ -181,32 +181,34 @@ function start()
             alignment = SI.UP1_LEFT1,
         )
 
-        push!(debug_text_list, "previous frame number: $(i)")
+        if IS_DEBUG
+            push!(DEBUG_INFO.messages, "previous frame number: $(i)")
 
-        push!(debug_text_list, "average total time spent per frame (averaged over previous $(length(frame_time_stamp_buffer) - 1) frames): $(round((last(frame_time_stamp_buffer) - first(frame_time_stamp_buffer)) / (1e6 * (length(frame_time_stamp_buffer) - 1)), digits = 2)) ms")
+            push!(DEBUG_INFO.messages, "average total time spent per frame (averaged over previous $(length(frame_time_stamp_buffer) - 1) frames): $(round((last(frame_time_stamp_buffer) - first(frame_time_stamp_buffer)) / (1e6 * (length(frame_time_stamp_buffer) - 1)), digits = 2)) ms")
 
-        push!(debug_text_list, "(avg. sleep time observed) - (avg. sleep time theoretical): $(round(sum(sleep_time_observed_buffer) / (1e6 * length(sleep_time_observed_buffer)) - sum(sleep_time_theoretical_buffer) / (1e6 * length(sleep_time_theoretical_buffer)), digits = 2)) ms")
+            push!(DEBUG_INFO.messages, "(avg. sleep time observed) - (avg. sleep time theoretical): $(round(sum(sleep_time_observed_buffer) / (1e6 * length(sleep_time_observed_buffer)) - sum(sleep_time_theoretical_buffer) / (1e6 * length(sleep_time_theoretical_buffer)), digits = 2)) ms")
 
-        push!(debug_text_list, "average compute time spent per frame (averaged over previous $(length(frame_compute_time_buffer)) frames): $(round(sum(frame_compute_time_buffer) / (1e6 * length(frame_compute_time_buffer)), digits = 2)) ms")
+            push!(DEBUG_INFO.messages, "average compute time spent per frame (averaged over previous $(length(frame_compute_time_buffer)) frames): $(round(sum(frame_compute_time_buffer) / (1e6 * length(frame_compute_time_buffer)), digits = 2)) ms")
 
-        push!(debug_text_list, "average texture upload time spent per frame (averaged over previous $(length(texture_upload_time_buffer)) frames): $(round(sum(texture_upload_time_buffer) / (1e6 * length(texture_upload_time_buffer)), digits = 2)) ms")
+            push!(DEBUG_INFO.messages, "average texture upload time spent per frame (averaged over previous $(length(texture_upload_time_buffer)) frames): $(round(sum(texture_upload_time_buffer) / (1e6 * length(texture_upload_time_buffer)), digits = 2)) ms")
 
-        push!(debug_text_list, "simulation_time: $(simulation_time)")
+            push!(DEBUG_INFO.messages, "simulation_time: $(simulation_time)")
 
-        push!(debug_text_list, "entities[1]: $(entities[1])")
+            push!(DEBUG_INFO.messages, "entities[1]: $(entities[1])")
 
-        push!(debug_text_list, "entities[2]: $(entities[2])")
+            push!(DEBUG_INFO.messages, "entities[2]: $(entities[2])")
 
-        push!(debug_text_list, "length(entities): $(length(entities))")
+            push!(DEBUG_INFO.messages, "length(entities): $(length(entities))")
 
-        if DEBUG_INFO.show_messages
-            for (j, text) in enumerate(debug_text_list)
-                SI.do_widget!(
-                    SI.TEXT,
-                    ui_context,
-                    SI.WidgetID(@__FILE__, @__LINE__, j),
-                    text;
-                )
+            if DEBUG_INFO.show_messages
+                for (j, text) in enumerate(DEBUG_INFO.messages)
+                    SI.do_widget!(
+                        SI.TEXT,
+                        ui_context,
+                        SI.WidgetID(@__FILE__, @__LINE__, j),
+                        text;
+                    )
+                end
             end
         end
 
