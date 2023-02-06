@@ -8,7 +8,7 @@ import ImageIO
 import ColorTypes as CT
 import FixedPointNumbers as FPN
 
-const IS_DEBUG = false
+const IS_DEBUG = true
 
 mutable struct DebugInfo
     show_messages::Bool
@@ -172,16 +172,17 @@ function start()
 
         drawing_system!(draw_list, entities, texture_atlas)
 
-        text = "Press the escape key to quit"
-        SI.do_widget!(
-            SI.TEXT,
-            ui_context,
-            SI.WidgetID(@__FILE__, @__LINE__, 1),
-            text;
-            alignment = SI.UP1_LEFT1,
-        )
-
         if IS_DEBUG
+            if DEBUG_INFO.show_messages
+                SI.do_widget!(
+                    SI.TEXT,
+                    ui_context,
+                    SI.WidgetID(@__FILE__, @__LINE__, 1),
+                    "Press the escape key to quit";
+                    alignment = SI.UP1_LEFT1,
+                )
+            end
+
             push!(DEBUG_INFO.messages, "previous frame number: $(i)")
 
             push!(DEBUG_INFO.messages, "average total time spent per frame (averaged over previous $(length(frame_time_stamp_buffer) - 1) frames): $(round((last(frame_time_stamp_buffer) - first(frame_time_stamp_buffer)) / (1e6 * (length(frame_time_stamp_buffer) - 1)), digits = 2)) ms")
