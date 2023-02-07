@@ -228,7 +228,9 @@ function start()
 
             push!(DEBUG_INFO.messages, "avg. texture upload time spent per frame: $(round(sum(DEBUG_INFO.texture_upload_time_buffer) / (1e6 * length(DEBUG_INFO.texture_upload_time_buffer)), digits = 2)) ms")
 
-            push!(DEBUG_INFO.messages, "(avg. sleep time observed) - (avg. sleep time theoretical): $(round(sum(DEBUG_INFO.sleep_time_observed_buffer) / (1e6 * length(DEBUG_INFO.sleep_time_observed_buffer)) - sum(DEBUG_INFO.sleep_time_theoretical_buffer) / (1e6 * length(DEBUG_INFO.sleep_time_theoretical_buffer)), digits = 2)) ms")
+            push!(DEBUG_INFO.messages, "avg. sleep time theoretical: $(round(sum(DEBUG_INFO.sleep_time_theoretical_buffer) / (1e6 * length(DEBUG_INFO.sleep_time_theoretical_buffer)), digits = 2)) ms")
+
+            push!(DEBUG_INFO.messages, "avg. sleep time observed: $(round(sum(DEBUG_INFO.sleep_time_observed_buffer) / (1e6 * length(DEBUG_INFO.sleep_time_observed_buffer)), digits = 2)) ms")
 
             push!(DEBUG_INFO.messages, "simulation_time: $(simulation_time)")
 
@@ -283,17 +285,18 @@ function start()
         i = i + 1
 
         sleep_time_theoretical = max(0, min_ns_per_frame - (get_time(reference_time) - frame_start_time))
+        if IS_DEBUG
+            push!(DEBUG_INFO.sleep_time_theoretical_buffer, sleep_time_theoretical)
+        end
 
         sleep_start_time = get_time(reference_time)
         sleep(sleep_time_theoretical / 1e9)
         sleep_end_time = get_time(reference_time)
+        if IS_DEBUG
+            push!(DEBUG_INFO.sleep_time_observed_buffer, sleep_end_time - sleep_start_time)
+        end
 
         if IS_DEBUG
-            push!(DEBUG_INFO.sleep_time_theoretical_buffer, sleep_time_theoretical)
-
-            sleep_time_observed = (sleep_end_time - sleep_start_time)
-            push!(DEBUG_INFO.sleep_time_observed_buffer, sleep_time_observed)
-
             push!(DEBUG_INFO.frame_time_stamp_buffer, get_time(reference_time))
         end
     end
