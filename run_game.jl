@@ -186,6 +186,14 @@ function start()
         AnimationState(1, 8, 100_000_000, 1),
     ))
 
+    add_entity!(entities, Entity(
+        true,
+        SD.Point(975, 1),
+        CollisionBox(SD.Rectangle(SD.Point(1, 1), 106, 1920)),
+        null(TextureIndex{Int}),
+        null(AnimationState{Int}),
+    ))
+
     draw_list = Any[]
 
     ui_context = SI.UIContext(user_interaction_state, user_input_state, layout, COLORS, draw_list)
