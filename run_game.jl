@@ -8,6 +8,76 @@ import ImageIO
 import ColorTypes as CT
 import FixedPointNumbers as FPN
 
+const IS_DEBUG = true
+
+mutable struct DebugInfo
+    show_messages::Bool
+    messages::Vector{String}
+    frame_start_time_buffer::DS.CircularBuffer{Int}
+    event_poll_time_buffer::DS.CircularBuffer{Int}
+    simulation_time_buffer::DS.CircularBuffer{Int}
+    animation_system_time_buffer::DS.CircularBuffer{Int}
+    drawing_system_time_buffer::DS.CircularBuffer{Int}
+    draw_time_buffer::DS.CircularBuffer{Int}
+    texture_upload_time_buffer::DS.CircularBuffer{Int}
+    buffer_swap_time_buffer::DS.CircularBuffer{Int}
+    sleep_time_theoretical_buffer::DS.CircularBuffer{Int}
+    sleep_time_observed_buffer::DS.CircularBuffer{Int}
+end
+
+function DebugInfo()
+    show_messages = true
+    messages = String[]
+    sliding_window_size = 30
+
+    frame_start_time_buffer = DS.CircularBuffer{Int}(sliding_window_size + 1)
+    push!(frame_start_time_buffer, 0)
+
+    event_poll_time_buffer = DS.CircularBuffer{Int}(sliding_window_size)
+    push!(event_poll_time_buffer, 0)
+
+    simulation_time_buffer = DS.CircularBuffer{Int}(sliding_window_size)
+    push!(simulation_time_buffer, 0)
+
+    animation_system_time_buffer = DS.CircularBuffer{Int}(sliding_window_size)
+    push!(animation_system_time_buffer, 0)
+
+    drawing_system_time_buffer = DS.CircularBuffer{Int}(sliding_window_size)
+    push!(drawing_system_time_buffer, 0)
+
+    draw_time_buffer = DS.CircularBuffer{Int}(sliding_window_size)
+    push!(draw_time_buffer, 0)
+
+    texture_upload_time_buffer = DS.CircularBuffer{Int}(sliding_window_size)
+    push!(texture_upload_time_buffer, 0)
+
+    sleep_time_theoretical_buffer = DS.CircularBuffer{Int}(sliding_window_size)
+    push!(sleep_time_theoretical_buffer, 0)
+
+    sleep_time_observed_buffer = DS.CircularBuffer{Int}(sliding_window_size)
+    push!(sleep_time_observed_buffer, 0)
+
+    buffer_swap_time_buffer = DS.CircularBuffer{Int}(sliding_window_size)
+    push!(buffer_swap_time_buffer, 0)
+
+    return DebugInfo(
+        show_messages,
+        messages,
+        frame_start_time_buffer,
+        event_poll_time_buffer,
+        simulation_time_buffer,
+        animation_system_time_buffer,
+        drawing_system_time_buffer,
+        draw_time_buffer,
+        texture_upload_time_buffer,
+        buffer_swap_time_buffer,
+        sleep_time_theoretical_buffer,
+        sleep_time_observed_buffer,
+    )
+end
+
+const DEBUG_INFO = DebugInfo()
+
 include("opengl_utils.jl")
 include("colors.jl")
 include("textures.jl")
@@ -90,9 +160,6 @@ function start()
 
     layout = SI.BoxLayout(SD.Rectangle(SD.Point(1, 1), image_height, image_width))
 
-    show_debug_text = true
-    debug_text_list = String[]
-
     # assets
     color_type = BinaryTransparentColor{CT.RGBA{FPN.N0f8}}
     texture_atlas = TextureAtlas(color_type[])
@@ -118,122 +185,150 @@ function start()
 
     ui_context = SI.UIContext(user_interaction_state, user_input_state, layout, COLORS, draw_list)
 
-    i = 0
-
-    sliding_window_size = 30
+    frame_number = 1
 
     max_frames_per_second = 60
     min_ns_per_frame = 1_000_000_000 ÷ max_frames_per_second
 
     reference_time = time_ns()
 
-    frame_time_stamp_buffer = DS.CircularBuffer{Int}(sliding_window_size + 1)
-    push!(frame_time_stamp_buffer, 0)
-    push!(frame_time_stamp_buffer, 1)
-
-    frame_compute_time_buffer = DS.CircularBuffer{Int}(sliding_window_size)
-    push!(frame_compute_time_buffer, 0)
-
-    texture_upload_time_buffer = DS.CircularBuffer{Int}(sliding_window_size)
-    push!(texture_upload_time_buffer, 0)
-
-    sleep_time_theoretical_buffer = DS.CircularBuffer{Int}(sliding_window_size)
-    push!(sleep_time_theoretical_buffer, 0)
-
-    sleep_time_observed_buffer = DS.CircularBuffer{Int}(sliding_window_size)
-    push!(sleep_time_observed_buffer, 0)
-
     while !GLFW.WindowShouldClose(window)
+        frame_start_time = get_time(reference_time)
+        if IS_DEBUG
+            push!(DEBUG_INFO.frame_start_time_buffer, frame_start_time)
+        end
+
+        event_poll_start_time = get_time(reference_time)
+        GLFW.PollEvents()
+        event_poll_end_time = get_time(reference_time)
+        if IS_DEBUG
+            push!(DEBUG_INFO.event_poll_time_buffer, event_poll_end_time - event_poll_start_time)
+        end
+
         if SI.went_down(user_input_state.keyboard_buttons[Int(GLFW.KEY_ESCAPE) + 1])
             GLFW.SetWindowShouldClose(window, true)
             break
         end
 
         if SI.went_down(user_input_state.keyboard_buttons[Int(GLFW.KEY_D) + 1])
-            show_debug_text = !show_debug_text
-        end
-
-        layout.reference_bounding_box = SD.Rectangle(SD.Point(1, 1), image_height, image_width)
-        empty!(debug_text_list)
-
-        compute_time_start = get_time(reference_time)
-
-        simulation_time = min_ns_per_frame
-
-        animation_system!(entities, simulation_time)
-
-        drawing_system!(draw_list, entities, texture_atlas)
-
-        text = "Press the escape key to quit"
-        SI.do_widget!(
-            SI.TEXT,
-            ui_context,
-            SI.WidgetID(@__FILE__, @__LINE__, 1),
-            text;
-            alignment = SI.UP1_LEFT1,
-        )
-
-        push!(debug_text_list, "previous frame number: $(i)")
-
-        push!(debug_text_list, "average total time spent per frame (averaged over previous $(length(frame_time_stamp_buffer) - 1) frames): $(round((last(frame_time_stamp_buffer) - first(frame_time_stamp_buffer)) / (1e6 * (length(frame_time_stamp_buffer) - 1)), digits = 2)) ms")
-
-        push!(debug_text_list, "(avg. sleep time observed) - (avg. sleep time theoretical): $(round(sum(sleep_time_observed_buffer) / (1e6 * length(sleep_time_observed_buffer)) - sum(sleep_time_theoretical_buffer) / (1e6 * length(sleep_time_theoretical_buffer)), digits = 2)) ms")
-
-        push!(debug_text_list, "average compute time spent per frame (averaged over previous $(length(frame_compute_time_buffer)) frames): $(round(sum(frame_compute_time_buffer) / (1e6 * length(frame_compute_time_buffer)), digits = 2)) ms")
-
-        push!(debug_text_list, "average texture upload time spent per frame (averaged over previous $(length(texture_upload_time_buffer)) frames): $(round(sum(texture_upload_time_buffer) / (1e6 * length(texture_upload_time_buffer)), digits = 2)) ms")
-
-        push!(debug_text_list, "simulation_time: $(simulation_time)")
-
-        push!(debug_text_list, "entities[1]: $(entities[1])")
-
-        push!(debug_text_list, "entities[2]: $(entities[2])")
-
-        push!(debug_text_list, "length(entities): $(length(entities))")
-
-        if show_debug_text
-            for (j, text) in enumerate(debug_text_list)
-                SI.do_widget!(
-                    SI.TEXT,
-                    ui_context,
-                    SI.WidgetID(@__FILE__, @__LINE__, j),
-                    text;
-                )
+            if IS_DEBUG
+                DEBUG_INFO.show_messages = !DEBUG_INFO.show_messages
             end
         end
 
+        layout.reference_bounding_box = SD.Rectangle(SD.Point(1, 1), image_height, image_width)
+        if IS_DEBUG
+            empty!(DEBUG_INFO.messages)
+        end
+
+        simulation_time = min_ns_per_frame
+        if IS_DEBUG
+            push!(DEBUG_INFO.simulation_time_buffer, simulation_time)
+        end
+
+        animation_system_start_time = get_time(reference_time)
+        animation_system!(entities, simulation_time)
+        animation_system_end_time = get_time(reference_time)
+        if IS_DEBUG
+            push!(DEBUG_INFO.animation_system_time_buffer, animation_system_end_time - animation_system_start_time)
+        end
+
+        drawing_system_start_time = get_time(reference_time)
+        drawing_system!(draw_list, entities, texture_atlas)
+        drawing_system_end_time = get_time(reference_time)
+        if IS_DEBUG
+            push!(DEBUG_INFO.drawing_system_time_buffer, drawing_system_end_time - drawing_system_start_time)
+        end
+
+        if IS_DEBUG
+            push!(DEBUG_INFO.messages, "Press the escape key to quit")
+
+            push!(DEBUG_INFO.messages, "previous frame number: $(frame_number)")
+
+            push!(DEBUG_INFO.messages, "avg. total time per frame: $(round((last(DEBUG_INFO.frame_start_time_buffer) - first(DEBUG_INFO.frame_start_time_buffer)) / (1e6 * (length(DEBUG_INFO.frame_start_time_buffer) - 1)), digits = 2)) ms")
+
+            push!(DEBUG_INFO.messages, "avg. event poll time per frame: $(round(sum(DEBUG_INFO.event_poll_time_buffer) / (1e6 * length(DEBUG_INFO.event_poll_time_buffer)), digits = 2)) ms")
+
+            push!(DEBUG_INFO.messages, "avg. simulation time per frame: $(round(sum(DEBUG_INFO.simulation_time_buffer) / (1e6 * length(DEBUG_INFO.simulation_time_buffer)), digits = 2)) ms")
+
+            push!(DEBUG_INFO.messages, "avg. animation system time per frame: $(round(sum(DEBUG_INFO.animation_system_time_buffer) / (1e6 * length(DEBUG_INFO.animation_system_time_buffer)), digits = 2)) ms")
+
+            push!(DEBUG_INFO.messages, "avg. drawing system time per frame: $(round(sum(DEBUG_INFO.drawing_system_time_buffer) / (1e6 * length(DEBUG_INFO.drawing_system_time_buffer)), digits = 2)) ms")
+
+            push!(DEBUG_INFO.messages, "avg. draw time per frame: $(round(sum(DEBUG_INFO.draw_time_buffer) / (1e6 * length(DEBUG_INFO.draw_time_buffer)), digits = 2)) ms")
+
+            push!(DEBUG_INFO.messages, "avg. texture upload time per frame: $(round(sum(DEBUG_INFO.texture_upload_time_buffer) / (1e6 * length(DEBUG_INFO.texture_upload_time_buffer)), digits = 2)) ms")
+
+            push!(DEBUG_INFO.messages, "avg. sleep time theoretical: $(round(sum(DEBUG_INFO.sleep_time_theoretical_buffer) / (1e6 * length(DEBUG_INFO.sleep_time_theoretical_buffer)), digits = 2)) ms")
+
+            push!(DEBUG_INFO.messages, "avg. sleep time observed: $(round(sum(DEBUG_INFO.sleep_time_observed_buffer) / (1e6 * length(DEBUG_INFO.sleep_time_observed_buffer)), digits = 2)) ms")
+
+            push!(DEBUG_INFO.messages, "avg. buffer swap time per frame: $(round(sum(DEBUG_INFO.buffer_swap_time_buffer) / (1e6 * length(DEBUG_INFO.buffer_swap_time_buffer)), digits = 2)) ms")
+
+            push!(DEBUG_INFO.messages, "length(entities): $(length(entities))")
+
+            for (i, entity) in enumerate(entities)
+                push!(DEBUG_INFO.messages, "entities[$(i)]: $(entities[i])")
+            end
+
+            if DEBUG_INFO.show_messages
+                for (j, text) in enumerate(DEBUG_INFO.messages)
+                    if isone(j)
+                        alignment = SI.UP1_LEFT1
+                    else
+                        alignment = SI.DOWN2_LEFT1
+                    end
+
+                    SI.do_widget!(
+                        SI.TEXT,
+                        ui_context,
+                        SI.WidgetID(@__FILE__, @__LINE__, j),
+                        text;
+                        alignment = alignment,
+                    )
+                end
+            end
+        end
+
+        draw_start_time = get_time(reference_time)
         for drawable in draw_list
             SD.draw!(image, drawable)
         end
+        draw_end_time = get_time(reference_time)
+        if IS_DEBUG
+            push!(DEBUG_INFO.draw_time_buffer, draw_end_time - draw_start_time)
+        end
         empty!(draw_list)
-
-        compute_time_end = get_time(reference_time)
-        push!(frame_compute_time_buffer, compute_time_end - compute_time_start)
 
         texture_upload_start_time = get_time(reference_time)
         update_back_buffer(image)
         texture_upload_end_time = get_time(reference_time)
-        push!(texture_upload_time_buffer, texture_upload_end_time - texture_upload_start_time)
+        if IS_DEBUG
+            push!(DEBUG_INFO.texture_upload_time_buffer, texture_upload_end_time - texture_upload_start_time)
+        end
 
+        buffer_swap_start_time = get_time(reference_time)
         GLFW.SwapBuffers(window)
+        buffer_swap_end_time = get_time(reference_time)
+        if IS_DEBUG
+            push!(DEBUG_INFO.buffer_swap_time_buffer, buffer_swap_end_time - buffer_swap_start_time)
+        end
 
         SI.reset!(user_input_state)
 
-        GLFW.PollEvents()
+        frame_number = frame_number + 1
 
-        i = i + 1
-
-        sleep_time_theoretical = max(0, min_ns_per_frame - (get_time(reference_time) - last(frame_time_stamp_buffer)))
-        push!(sleep_time_theoretical_buffer, sleep_time_theoretical)
+        sleep_time_theoretical = max(0, min_ns_per_frame - (get_time(reference_time) - frame_start_time))
+        if IS_DEBUG
+            push!(DEBUG_INFO.sleep_time_theoretical_buffer, sleep_time_theoretical)
+        end
 
         sleep_start_time = get_time(reference_time)
         sleep(sleep_time_theoretical / 1e9)
         sleep_end_time = get_time(reference_time)
-
-        sleep_time_observed = (sleep_end_time - sleep_start_time)
-        push!(sleep_time_observed_buffer, sleep_time_observed)
-
-        push!(frame_time_stamp_buffer, get_time(reference_time))
+        if IS_DEBUG
+            push!(DEBUG_INFO.sleep_time_observed_buffer, sleep_end_time - sleep_start_time)
+        end
     end
 
     MGL.glDeleteVertexArrays(1, VAO_ref)
