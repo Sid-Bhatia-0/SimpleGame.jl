@@ -220,15 +220,15 @@ function start()
 
             push!(DEBUG_INFO.messages, "avg. total time spent per frame: $(round((last(DEBUG_INFO.frame_time_stamp_buffer) - first(DEBUG_INFO.frame_time_stamp_buffer)) / (1e6 * (length(DEBUG_INFO.frame_time_stamp_buffer) - 1)), digits = 2)) ms")
 
-            push!(DEBUG_INFO.messages, "(avg. sleep time observed) - (avg. sleep time theoretical): $(round(sum(DEBUG_INFO.sleep_time_observed_buffer) / (1e6 * length(DEBUG_INFO.sleep_time_observed_buffer)) - sum(DEBUG_INFO.sleep_time_theoretical_buffer) / (1e6 * length(DEBUG_INFO.sleep_time_theoretical_buffer)), digits = 2)) ms")
-
-            push!(DEBUG_INFO.messages, "avg. texture upload time spent per frame: $(round(sum(DEBUG_INFO.texture_upload_time_buffer) / (1e6 * length(DEBUG_INFO.texture_upload_time_buffer)), digits = 2)) ms")
-
-            push!(DEBUG_INFO.messages, "avg. draw time spent per frame: $(round(sum(DEBUG_INFO.draw_time_buffer) / (1e6 * length(DEBUG_INFO.draw_time_buffer)), digits = 2)) ms")
-
             push!(DEBUG_INFO.messages, "avg. animation system time spent per frame: $(round(sum(DEBUG_INFO.animation_system_time_buffer) / (1e6 * length(DEBUG_INFO.animation_system_time_buffer)), digits = 2)) ms")
 
             push!(DEBUG_INFO.messages, "avg. drawing system time spent per frame: $(round(sum(DEBUG_INFO.drawing_system_time_buffer) / (1e6 * length(DEBUG_INFO.drawing_system_time_buffer)), digits = 2)) ms")
+
+            push!(DEBUG_INFO.messages, "avg. draw time spent per frame: $(round(sum(DEBUG_INFO.draw_time_buffer) / (1e6 * length(DEBUG_INFO.draw_time_buffer)), digits = 2)) ms")
+
+            push!(DEBUG_INFO.messages, "avg. texture upload time spent per frame: $(round(sum(DEBUG_INFO.texture_upload_time_buffer) / (1e6 * length(DEBUG_INFO.texture_upload_time_buffer)), digits = 2)) ms")
+
+            push!(DEBUG_INFO.messages, "(avg. sleep time observed) - (avg. sleep time theoretical): $(round(sum(DEBUG_INFO.sleep_time_observed_buffer) / (1e6 * length(DEBUG_INFO.sleep_time_observed_buffer)) - sum(DEBUG_INFO.sleep_time_theoretical_buffer) / (1e6 * length(DEBUG_INFO.sleep_time_theoretical_buffer)), digits = 2)) ms")
 
             push!(DEBUG_INFO.messages, "simulation_time: $(simulation_time)")
 
