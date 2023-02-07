@@ -20,6 +20,7 @@ mutable struct DebugInfo
     draw_time_buffer::DS.CircularBuffer{Int}
     animation_system_time_buffer::DS.CircularBuffer{Int}
     drawing_system_time_buffer::DS.CircularBuffer{Int}
+    event_poll_time_buffer::DS.CircularBuffer{Int}
 end
 
 function DebugInfo()
@@ -48,6 +49,9 @@ function DebugInfo()
     drawing_system_time_buffer = DS.CircularBuffer{Int}(sliding_window_size)
     push!(drawing_system_time_buffer, 0)
 
+    event_poll_time_buffer = DS.CircularBuffer{Int}(sliding_window_size)
+    push!(event_poll_time_buffer, 0)
+
     return DebugInfo(
         show_messages,
         messages,
@@ -58,6 +62,7 @@ function DebugInfo()
         draw_time_buffer,
         animation_system_time_buffer,
         drawing_system_time_buffer,
+        event_poll_time_buffer,
     )
 end
 
@@ -234,6 +239,8 @@ function start()
 
             push!(DEBUG_INFO.messages, "avg. sleep time observed: $(round(sum(DEBUG_INFO.sleep_time_observed_buffer) / (1e6 * length(DEBUG_INFO.sleep_time_observed_buffer)), digits = 2)) ms")
 
+            push!(DEBUG_INFO.messages, "avg. event poll time: $(round(sum(DEBUG_INFO.event_poll_time_buffer) / (1e6 * length(DEBUG_INFO.event_poll_time_buffer)), digits = 2)) ms")
+
             push!(DEBUG_INFO.messages, "simulation_time: $(simulation_time)")
 
             push!(DEBUG_INFO.messages, "entities[1]: $(entities[1])")
@@ -282,7 +289,12 @@ function start()
 
         SI.reset!(user_input_state)
 
+        event_poll_start_time = get_time(reference_time)
         GLFW.PollEvents()
+        event_poll_end_time = get_time(reference_time)
+        if IS_DEBUG
+            push!(DEBUG_INFO.event_poll_time_buffer, event_poll_end_time - event_poll_start_time)
+        end
 
         frame_number = frame_number + 1
 
