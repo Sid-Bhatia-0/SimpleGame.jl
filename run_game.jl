@@ -247,6 +247,10 @@ function start()
 
             push!(DEBUG_INFO.messages, "avg. total time per frame: $(round((last(DEBUG_INFO.frame_start_time_buffer) - first(DEBUG_INFO.frame_start_time_buffer)) / (1e6 * (length(DEBUG_INFO.frame_start_time_buffer) - 1)), digits = 2)) ms")
 
+            push!(DEBUG_INFO.messages, "avg. event poll time per frame: $(round(sum(DEBUG_INFO.event_poll_time_buffer) / (1e6 * length(DEBUG_INFO.event_poll_time_buffer)), digits = 2)) ms")
+
+            push!(DEBUG_INFO.messages, "avg. simulation time per frame: $(round(sum(DEBUG_INFO.simulation_time_buffer) / (1e6 * length(DEBUG_INFO.simulation_time_buffer)), digits = 2)) ms")
+
             push!(DEBUG_INFO.messages, "avg. animation system time per frame: $(round(sum(DEBUG_INFO.animation_system_time_buffer) / (1e6 * length(DEBUG_INFO.animation_system_time_buffer)), digits = 2)) ms")
 
             push!(DEBUG_INFO.messages, "avg. drawing system time per frame: $(round(sum(DEBUG_INFO.drawing_system_time_buffer) / (1e6 * length(DEBUG_INFO.drawing_system_time_buffer)), digits = 2)) ms")
@@ -259,11 +263,7 @@ function start()
 
             push!(DEBUG_INFO.messages, "avg. sleep time observed: $(round(sum(DEBUG_INFO.sleep_time_observed_buffer) / (1e6 * length(DEBUG_INFO.sleep_time_observed_buffer)), digits = 2)) ms")
 
-            push!(DEBUG_INFO.messages, "avg. event poll time per frame: $(round(sum(DEBUG_INFO.event_poll_time_buffer) / (1e6 * length(DEBUG_INFO.event_poll_time_buffer)), digits = 2)) ms")
-
             push!(DEBUG_INFO.messages, "avg. buffer swap time per frame: $(round(sum(DEBUG_INFO.buffer_swap_time_buffer) / (1e6 * length(DEBUG_INFO.buffer_swap_time_buffer)), digits = 2)) ms")
-
-            push!(DEBUG_INFO.messages, "avg. simulation time per frame: $(round(sum(DEBUG_INFO.simulation_time_buffer) / (1e6 * length(DEBUG_INFO.simulation_time_buffer)), digits = 2)) ms")
 
             push!(DEBUG_INFO.messages, "length(entities): $(length(entities))")
 
