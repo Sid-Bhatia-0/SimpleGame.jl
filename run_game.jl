@@ -188,6 +188,13 @@ function start()
             push!(DEBUG_INFO.frame_start_time_buffer, frame_start_time)
         end
 
+        event_poll_start_time = get_time(reference_time)
+        GLFW.PollEvents()
+        event_poll_end_time = get_time(reference_time)
+        if IS_DEBUG
+            push!(DEBUG_INFO.event_poll_time_buffer, event_poll_end_time - event_poll_start_time)
+        end
+
         if SI.went_down(user_input_state.keyboard_buttons[Int(GLFW.KEY_ESCAPE) + 1])
             GLFW.SetWindowShouldClose(window, true)
             break
@@ -288,13 +295,6 @@ function start()
         GLFW.SwapBuffers(window)
 
         SI.reset!(user_input_state)
-
-        event_poll_start_time = get_time(reference_time)
-        GLFW.PollEvents()
-        event_poll_end_time = get_time(reference_time)
-        if IS_DEBUG
-            push!(DEBUG_INFO.event_poll_time_buffer, event_poll_end_time - event_poll_start_time)
-        end
 
         frame_number = frame_number + 1
 
