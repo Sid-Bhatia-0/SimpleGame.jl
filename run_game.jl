@@ -18,6 +18,7 @@ mutable struct DebugInfo
     texture_upload_time_buffer::DS.CircularBuffer{Int}
     sleep_time_theoretical_buffer::DS.CircularBuffer{Int}
     sleep_time_observed_buffer::DS.CircularBuffer{Int}
+    draw_time_buffer::DS.CircularBuffer{Int}
 end
 
 function DebugInfo()
@@ -41,6 +42,9 @@ function DebugInfo()
     sleep_time_observed_buffer = DS.CircularBuffer{Int}(sliding_window_size)
     push!(sleep_time_observed_buffer, 0)
 
+    draw_time_buffer = DS.CircularBuffer{Int}(sliding_window_size)
+    push!(draw_time_buffer, 0)
+
     return DebugInfo(
         show_messages,
         messages,
@@ -49,6 +53,7 @@ function DebugInfo()
         texture_upload_time_buffer,
         sleep_time_theoretical_buffer,
         sleep_time_observed_buffer,
+        draw_time_buffer,
     )
 end
 
@@ -208,6 +213,8 @@ function start()
 
             push!(DEBUG_INFO.messages, "average texture upload time spent per frame (averaged over previous $(length(DEBUG_INFO.texture_upload_time_buffer)) frames): $(round(sum(DEBUG_INFO.texture_upload_time_buffer) / (1e6 * length(DEBUG_INFO.texture_upload_time_buffer)), digits = 2)) ms")
 
+            push!(DEBUG_INFO.messages, "average draw time spent per frame (averaged over previous $(length(DEBUG_INFO.draw_time_buffer)) frames): $(round(sum(DEBUG_INFO.draw_time_buffer) / (1e6 * length(DEBUG_INFO.draw_time_buffer)), digits = 2)) ms")
+
             push!(DEBUG_INFO.messages, "simulation_time: $(simulation_time)")
 
             push!(DEBUG_INFO.messages, "entities[1]: $(entities[1])")
@@ -235,8 +242,13 @@ function start()
             end
         end
 
+        draw_start_time = get_time(reference_time)
         for drawable in draw_list
             SD.draw!(image, drawable)
+        end
+        draw_end_time = get_time(reference_time)
+        if IS_DEBUG
+            push!(DEBUG_INFO.draw_time_buffer, draw_end_time - draw_start_time)
         end
         empty!(draw_list)
 
