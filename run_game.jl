@@ -12,6 +12,7 @@ const IS_DEBUG = true
 
 mutable struct DebugInfo
     show_messages::Bool
+    show_collision_boxes::Bool
     messages::Vector{String}
     frame_start_time_buffer::DS.CircularBuffer{Int}
     event_poll_time_buffer::DS.CircularBuffer{Int}
@@ -27,6 +28,7 @@ end
 
 function DebugInfo()
     show_messages = true
+    show_collision_boxes = true
     messages = String[]
     sliding_window_size = 30
 
@@ -62,6 +64,7 @@ function DebugInfo()
 
     return DebugInfo(
         show_messages,
+        show_collision_boxes,
         messages,
         frame_start_time_buffer,
         event_poll_time_buffer,
@@ -215,6 +218,12 @@ function start()
         if SI.went_down(user_input_state.keyboard_buttons[Int(GLFW.KEY_D) + 1])
             if IS_DEBUG
                 DEBUG_INFO.show_messages = !DEBUG_INFO.show_messages
+            end
+        end
+
+        if SI.went_down(user_input_state.keyboard_buttons[Int(GLFW.KEY_C) + 1])
+            if IS_DEBUG
+                DEBUG_INFO.show_collision_boxes = !DEBUG_INFO.show_collision_boxes
             end
         end
 

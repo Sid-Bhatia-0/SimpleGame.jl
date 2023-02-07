@@ -65,8 +65,10 @@ function drawing_system!(draw_list, entities, texture_atlas)
 
             end
 
-            if is_collidable(entity)
-                push!(draw_list, ShapeDrawable(SD.move(entity.collision_box.shape, entity.position.i - 1, entity.position.j -1), COLORS[Integer(SI.COLOR_INDEX_TEXT)]))
+            if DEBUG_INFO.show_collision_boxes
+                if is_collidable(entity)
+                    push!(draw_list, ShapeDrawable(SD.move(entity.collision_box.shape, entity.position.i - 1, entity.position.j -1), COLORS[Integer(SI.COLOR_INDEX_TEXT)]))
+                end
             end
         end
     end
