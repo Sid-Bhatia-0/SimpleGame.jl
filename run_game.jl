@@ -14,15 +14,15 @@ mutable struct DebugInfo
     show_messages::Bool
     messages::Vector{String}
     frame_start_time_buffer::DS.CircularBuffer{Int}
-    texture_upload_time_buffer::DS.CircularBuffer{Int}
-    sleep_time_theoretical_buffer::DS.CircularBuffer{Int}
-    sleep_time_observed_buffer::DS.CircularBuffer{Int}
-    draw_time_buffer::DS.CircularBuffer{Int}
+    event_poll_time_buffer::DS.CircularBuffer{Int}
+    simulation_time_buffer::DS.CircularBuffer{Int}
     animation_system_time_buffer::DS.CircularBuffer{Int}
     drawing_system_time_buffer::DS.CircularBuffer{Int}
-    event_poll_time_buffer::DS.CircularBuffer{Int}
+    draw_time_buffer::DS.CircularBuffer{Int}
+    texture_upload_time_buffer::DS.CircularBuffer{Int}
     buffer_swap_time_buffer::DS.CircularBuffer{Int}
-    simulation_time_buffer::DS.CircularBuffer{Int}
+    sleep_time_theoretical_buffer::DS.CircularBuffer{Int}
+    sleep_time_observed_buffer::DS.CircularBuffer{Int}
 end
 
 function DebugInfo()
@@ -33,6 +33,21 @@ function DebugInfo()
     frame_start_time_buffer = DS.CircularBuffer{Int}(sliding_window_size + 1)
     push!(frame_start_time_buffer, 0)
 
+    event_poll_time_buffer = DS.CircularBuffer{Int}(sliding_window_size)
+    push!(event_poll_time_buffer, 0)
+
+    simulation_time_buffer = DS.CircularBuffer{Int}(sliding_window_size)
+    push!(simulation_time_buffer, 0)
+
+    animation_system_time_buffer = DS.CircularBuffer{Int}(sliding_window_size)
+    push!(animation_system_time_buffer, 0)
+
+    drawing_system_time_buffer = DS.CircularBuffer{Int}(sliding_window_size)
+    push!(drawing_system_time_buffer, 0)
+
+    draw_time_buffer = DS.CircularBuffer{Int}(sliding_window_size)
+    push!(draw_time_buffer, 0)
+
     texture_upload_time_buffer = DS.CircularBuffer{Int}(sliding_window_size)
     push!(texture_upload_time_buffer, 0)
 
@@ -42,37 +57,22 @@ function DebugInfo()
     sleep_time_observed_buffer = DS.CircularBuffer{Int}(sliding_window_size)
     push!(sleep_time_observed_buffer, 0)
 
-    draw_time_buffer = DS.CircularBuffer{Int}(sliding_window_size)
-    push!(draw_time_buffer, 0)
-
-    animation_system_time_buffer = DS.CircularBuffer{Int}(sliding_window_size)
-    push!(animation_system_time_buffer, 0)
-
-    drawing_system_time_buffer = DS.CircularBuffer{Int}(sliding_window_size)
-    push!(drawing_system_time_buffer, 0)
-
-    event_poll_time_buffer = DS.CircularBuffer{Int}(sliding_window_size)
-    push!(event_poll_time_buffer, 0)
-
     buffer_swap_time_buffer = DS.CircularBuffer{Int}(sliding_window_size)
     push!(buffer_swap_time_buffer, 0)
-
-    simulation_time_buffer = DS.CircularBuffer{Int}(sliding_window_size)
-    push!(simulation_time_buffer, 0)
 
     return DebugInfo(
         show_messages,
         messages,
         frame_start_time_buffer,
-        texture_upload_time_buffer,
-        sleep_time_theoretical_buffer,
-        sleep_time_observed_buffer,
-        draw_time_buffer,
+        event_poll_time_buffer,
+        simulation_time_buffer,
         animation_system_time_buffer,
         drawing_system_time_buffer,
-        event_poll_time_buffer,
+        draw_time_buffer,
+        texture_upload_time_buffer,
         buffer_swap_time_buffer,
-        simulation_time_buffer,
+        sleep_time_theoretical_buffer,
+        sleep_time_observed_buffer,
     )
 end
 
