@@ -13,7 +13,7 @@ const IS_DEBUG = true
 mutable struct DebugInfo
     show_messages::Bool
     messages::Vector{String}
-    frame_time_stamp_buffer::DS.CircularBuffer{Int}
+    frame_start_time_buffer::DS.CircularBuffer{Int}
     texture_upload_time_buffer::DS.CircularBuffer{Int}
     sleep_time_theoretical_buffer::DS.CircularBuffer{Int}
     sleep_time_observed_buffer::DS.CircularBuffer{Int}
@@ -27,9 +27,8 @@ function DebugInfo()
     messages = String[]
     sliding_window_size = 30
 
-    frame_time_stamp_buffer = DS.CircularBuffer{Int}(sliding_window_size + 1)
-    push!(frame_time_stamp_buffer, 0)
-    push!(frame_time_stamp_buffer, 1)
+    frame_start_time_buffer = DS.CircularBuffer{Int}(sliding_window_size + 1)
+    push!(frame_start_time_buffer, 0)
 
     texture_upload_time_buffer = DS.CircularBuffer{Int}(sliding_window_size)
     push!(texture_upload_time_buffer, 0)
@@ -52,7 +51,7 @@ function DebugInfo()
     return DebugInfo(
         show_messages,
         messages,
-        frame_time_stamp_buffer,
+        frame_start_time_buffer,
         texture_upload_time_buffer,
         sleep_time_theoretical_buffer,
         sleep_time_observed_buffer,
@@ -180,6 +179,9 @@ function start()
 
     while !GLFW.WindowShouldClose(window)
         frame_start_time = get_time(reference_time)
+        if IS_DEBUG
+            push!(DEBUG_INFO.frame_start_time_buffer, frame_start_time)
+        end
 
         if SI.went_down(user_input_state.keyboard_buttons[Int(GLFW.KEY_ESCAPE) + 1])
             GLFW.SetWindowShouldClose(window, true)
@@ -218,7 +220,7 @@ function start()
 
             push!(DEBUG_INFO.messages, "previous frame number: $(i)")
 
-            push!(DEBUG_INFO.messages, "avg. total time spent per frame: $(round((last(DEBUG_INFO.frame_time_stamp_buffer) - first(DEBUG_INFO.frame_time_stamp_buffer)) / (1e6 * (length(DEBUG_INFO.frame_time_stamp_buffer) - 1)), digits = 2)) ms")
+            push!(DEBUG_INFO.messages, "avg. total time spent per frame: $(round((last(DEBUG_INFO.frame_start_time_buffer) - first(DEBUG_INFO.frame_start_time_buffer)) / (1e6 * (length(DEBUG_INFO.frame_start_time_buffer) - 1)), digits = 2)) ms")
 
             push!(DEBUG_INFO.messages, "avg. animation system time spent per frame: $(round(sum(DEBUG_INFO.animation_system_time_buffer) / (1e6 * length(DEBUG_INFO.animation_system_time_buffer)), digits = 2)) ms")
 
@@ -294,10 +296,6 @@ function start()
         sleep_end_time = get_time(reference_time)
         if IS_DEBUG
             push!(DEBUG_INFO.sleep_time_observed_buffer, sleep_end_time - sleep_start_time)
-        end
-
-        if IS_DEBUG
-            push!(DEBUG_INFO.frame_time_stamp_buffer, get_time(reference_time))
         end
     end
 
