@@ -267,9 +267,9 @@ function start()
 
             push!(DEBUG_INFO.messages, "length(entities): $(length(entities))")
 
-            push!(DEBUG_INFO.messages, "entities[1]: $(entities[1])")
-
-            push!(DEBUG_INFO.messages, "entities[2]: $(entities[2])")
+            for (i, entity) in enumerate(entities)
+                push!(DEBUG_INFO.messages, "entities[$(i)]: $(entities[i])")
+            end
 
             if DEBUG_INFO.show_messages
                 for (j, text) in enumerate(DEBUG_INFO.messages)
