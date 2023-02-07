@@ -22,6 +22,7 @@ mutable struct DebugInfo
     drawing_system_time_buffer::DS.CircularBuffer{Int}
     event_poll_time_buffer::DS.CircularBuffer{Int}
     buffer_swap_time_buffer::DS.CircularBuffer{Int}
+    simulation_time_buffer::DS.CircularBuffer{Int}
 end
 
 function DebugInfo()
@@ -56,6 +57,9 @@ function DebugInfo()
     buffer_swap_time_buffer = DS.CircularBuffer{Int}(sliding_window_size)
     push!(buffer_swap_time_buffer, 0)
 
+    simulation_time_buffer = DS.CircularBuffer{Int}(sliding_window_size)
+    push!(simulation_time_buffer, 0)
+
     return DebugInfo(
         show_messages,
         messages,
@@ -68,6 +72,7 @@ function DebugInfo()
         drawing_system_time_buffer,
         event_poll_time_buffer,
         buffer_swap_time_buffer,
+        simulation_time_buffer,
     )
 end
 
@@ -217,6 +222,9 @@ function start()
         end
 
         simulation_time = min_ns_per_frame
+        if IS_DEBUG
+            push!(DEBUG_INFO.simulation_time_buffer, simulation_time)
+        end
 
         animation_system_start_time = get_time(reference_time)
         animation_system!(entities, simulation_time)
@@ -255,7 +263,7 @@ function start()
 
             push!(DEBUG_INFO.messages, "avg. buffer swap time per frame: $(round(sum(DEBUG_INFO.buffer_swap_time_buffer) / (1e6 * length(DEBUG_INFO.buffer_swap_time_buffer)), digits = 2)) ms")
 
-            push!(DEBUG_INFO.messages, "simulation_time: $(simulation_time)")
+            push!(DEBUG_INFO.messages, "avg. simulation time per frame: $(round(sum(DEBUG_INFO.simulation_time_buffer) / (1e6 * length(DEBUG_INFO.simulation_time_buffer)), digits = 2)) ms")
 
             push!(DEBUG_INFO.messages, "length(entities): $(length(entities))")
 
