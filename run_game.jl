@@ -21,6 +21,7 @@ mutable struct DebugInfo
     animation_system_time_buffer::DS.CircularBuffer{Int}
     drawing_system_time_buffer::DS.CircularBuffer{Int}
     event_poll_time_buffer::DS.CircularBuffer{Int}
+    buffer_swap_time_buffer::DS.CircularBuffer{Int}
 end
 
 function DebugInfo()
@@ -52,6 +53,9 @@ function DebugInfo()
     event_poll_time_buffer = DS.CircularBuffer{Int}(sliding_window_size)
     push!(event_poll_time_buffer, 0)
 
+    buffer_swap_time_buffer = DS.CircularBuffer{Int}(sliding_window_size)
+    push!(buffer_swap_time_buffer, 0)
+
     return DebugInfo(
         show_messages,
         messages,
@@ -63,6 +67,7 @@ function DebugInfo()
         animation_system_time_buffer,
         drawing_system_time_buffer,
         event_poll_time_buffer,
+        buffer_swap_time_buffer,
     )
 end
 
@@ -248,6 +253,8 @@ function start()
 
             push!(DEBUG_INFO.messages, "avg. event poll time: $(round(sum(DEBUG_INFO.event_poll_time_buffer) / (1e6 * length(DEBUG_INFO.event_poll_time_buffer)), digits = 2)) ms")
 
+            push!(DEBUG_INFO.messages, "avg. buffer swap time: $(round(sum(DEBUG_INFO.buffer_swap_time_buffer) / (1e6 * length(DEBUG_INFO.buffer_swap_time_buffer)), digits = 2)) ms")
+
             push!(DEBUG_INFO.messages, "simulation_time: $(simulation_time)")
 
             push!(DEBUG_INFO.messages, "entities[1]: $(entities[1])")
@@ -292,7 +299,12 @@ function start()
             push!(DEBUG_INFO.texture_upload_time_buffer, texture_upload_end_time - texture_upload_start_time)
         end
 
+        buffer_swap_start_time = get_time(reference_time)
         GLFW.SwapBuffers(window)
+        buffer_swap_end_time = get_time(reference_time)
+        if IS_DEBUG
+            push!(DEBUG_INFO.buffer_swap_time_buffer, buffer_swap_end_time - buffer_swap_start_time)
+        end
 
         SI.reset!(user_input_state)
 
