@@ -170,7 +170,7 @@ function start()
 
     ui_context = SI.UIContext(user_interaction_state, user_input_state, layout, COLORS, draw_list)
 
-    frame_number = 0
+    frame_number = 1
 
     max_frames_per_second = 60
     min_ns_per_frame = 1_000_000_000 ÷ max_frames_per_second
