@@ -19,6 +19,7 @@ mutable struct DebugInfo
     sleep_time_observed_buffer::DS.CircularBuffer{Int}
     draw_time_buffer::DS.CircularBuffer{Int}
     animation_system_time_buffer::DS.CircularBuffer{Int}
+    drawing_system_time_buffer::DS.CircularBuffer{Int}
 end
 
 function DebugInfo()
@@ -45,6 +46,9 @@ function DebugInfo()
     animation_system_time_buffer = DS.CircularBuffer{Int}(sliding_window_size)
     push!(animation_system_time_buffer, 0)
 
+    drawing_system_time_buffer = DS.CircularBuffer{Int}(sliding_window_size)
+    push!(drawing_system_time_buffer, 0)
+
     return DebugInfo(
         show_messages,
         messages,
@@ -54,6 +58,7 @@ function DebugInfo()
         sleep_time_observed_buffer,
         draw_time_buffer,
         animation_system_time_buffer,
+        drawing_system_time_buffer,
     )
 end
 
@@ -201,7 +206,12 @@ function start()
             push!(DEBUG_INFO.animation_system_time_buffer, animation_system_end_time - animation_system_start_time)
         end
 
+        drawing_system_start_time = get_time(reference_time)
         drawing_system!(draw_list, entities, texture_atlas)
+        drawing_system_end_time = get_time(reference_time)
+        if IS_DEBUG
+            push!(DEBUG_INFO.drawing_system_time_buffer, drawing_system_end_time - drawing_system_start_time)
+        end
 
         if IS_DEBUG
             push!(DEBUG_INFO.messages, "Press the escape key to quit")
@@ -217,6 +227,8 @@ function start()
             push!(DEBUG_INFO.messages, "avg. draw time spent per frame: $(round(sum(DEBUG_INFO.draw_time_buffer) / (1e6 * length(DEBUG_INFO.draw_time_buffer)), digits = 2)) ms")
 
             push!(DEBUG_INFO.messages, "avg. animation system time spent per frame: $(round(sum(DEBUG_INFO.animation_system_time_buffer) / (1e6 * length(DEBUG_INFO.animation_system_time_buffer)), digits = 2)) ms")
+
+            push!(DEBUG_INFO.messages, "avg. drawing system time spent per frame: $(round(sum(DEBUG_INFO.drawing_system_time_buffer) / (1e6 * length(DEBUG_INFO.drawing_system_time_buffer)), digits = 2)) ms")
 
             push!(DEBUG_INFO.messages, "simulation_time: $(simulation_time)")
 
