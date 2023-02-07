@@ -14,7 +14,6 @@ mutable struct DebugInfo
     show_messages::Bool
     messages::Vector{String}
     frame_time_stamp_buffer::DS.CircularBuffer{Int}
-    frame_compute_time_buffer::DS.CircularBuffer{Int}
     texture_upload_time_buffer::DS.CircularBuffer{Int}
     sleep_time_theoretical_buffer::DS.CircularBuffer{Int}
     sleep_time_observed_buffer::DS.CircularBuffer{Int}
@@ -29,9 +28,6 @@ function DebugInfo()
     frame_time_stamp_buffer = DS.CircularBuffer{Int}(sliding_window_size + 1)
     push!(frame_time_stamp_buffer, 0)
     push!(frame_time_stamp_buffer, 1)
-
-    frame_compute_time_buffer = DS.CircularBuffer{Int}(sliding_window_size)
-    push!(frame_compute_time_buffer, 0)
 
     texture_upload_time_buffer = DS.CircularBuffer{Int}(sliding_window_size)
     push!(texture_upload_time_buffer, 0)
@@ -49,7 +45,6 @@ function DebugInfo()
         show_messages,
         messages,
         frame_time_stamp_buffer,
-        frame_compute_time_buffer,
         texture_upload_time_buffer,
         sleep_time_theoretical_buffer,
         sleep_time_observed_buffer,
@@ -192,8 +187,6 @@ function start()
             empty!(DEBUG_INFO.messages)
         end
 
-        compute_time_start = get_time(reference_time)
-
         simulation_time = min_ns_per_frame
 
         animation_system!(entities, simulation_time)
@@ -208,8 +201,6 @@ function start()
             push!(DEBUG_INFO.messages, "average total time spent per frame (averaged over previous $(length(DEBUG_INFO.frame_time_stamp_buffer) - 1) frames): $(round((last(DEBUG_INFO.frame_time_stamp_buffer) - first(DEBUG_INFO.frame_time_stamp_buffer)) / (1e6 * (length(DEBUG_INFO.frame_time_stamp_buffer) - 1)), digits = 2)) ms")
 
             push!(DEBUG_INFO.messages, "(avg. sleep time observed) - (avg. sleep time theoretical): $(round(sum(DEBUG_INFO.sleep_time_observed_buffer) / (1e6 * length(DEBUG_INFO.sleep_time_observed_buffer)) - sum(DEBUG_INFO.sleep_time_theoretical_buffer) / (1e6 * length(DEBUG_INFO.sleep_time_theoretical_buffer)), digits = 2)) ms")
-
-            push!(DEBUG_INFO.messages, "average compute time spent per frame (averaged over previous $(length(DEBUG_INFO.frame_compute_time_buffer)) frames): $(round(sum(DEBUG_INFO.frame_compute_time_buffer) / (1e6 * length(DEBUG_INFO.frame_compute_time_buffer)), digits = 2)) ms")
 
             push!(DEBUG_INFO.messages, "average texture upload time spent per frame (averaged over previous $(length(DEBUG_INFO.texture_upload_time_buffer)) frames): $(round(sum(DEBUG_INFO.texture_upload_time_buffer) / (1e6 * length(DEBUG_INFO.texture_upload_time_buffer)), digits = 2)) ms")
 
@@ -251,11 +242,6 @@ function start()
             push!(DEBUG_INFO.draw_time_buffer, draw_end_time - draw_start_time)
         end
         empty!(draw_list)
-
-        compute_time_end = get_time(reference_time)
-        if IS_DEBUG
-            push!(DEBUG_INFO.frame_compute_time_buffer, compute_time_end - compute_time_start)
-        end
 
         texture_upload_start_time = get_time(reference_time)
         update_back_buffer(image)
