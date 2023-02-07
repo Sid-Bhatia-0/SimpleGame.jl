@@ -12,6 +12,7 @@ const IS_DEBUG = true
 
 mutable struct DebugInfo
     show_messages::Bool
+    show_collision_boxes::Bool
     messages::Vector{String}
     frame_start_time_buffer::DS.CircularBuffer{Int}
     event_poll_time_buffer::DS.CircularBuffer{Int}
@@ -27,6 +28,7 @@ end
 
 function DebugInfo()
     show_messages = true
+    show_collision_boxes = true
     messages = String[]
     sliding_window_size = 30
 
@@ -62,6 +64,7 @@ function DebugInfo()
 
     return DebugInfo(
         show_messages,
+        show_collision_boxes,
         messages,
         frame_start_time_buffer,
         event_poll_time_buffer,
@@ -170,6 +173,7 @@ function start()
     add_entity!(entities, Entity(
         true,
         SD.Point(1, 1),
+        null(CollisionBox{Int}),
         load_texture(texture_atlas, "assets/background.png"),
         null(AnimationState{Int}),
     ))
@@ -177,6 +181,7 @@ function start()
     add_entity!(entities, Entity(
         true,
         SD.Point(540, 960),
+        CollisionBox(SD.Rectangle(SD.Point(1, 1), 32 * 4, 24 * 4)),
         load_texture(texture_atlas, "assets/burning_loop_1.png", length_scale = 4),
         AnimationState(1, 8, 100_000_000, 1),
     ))
@@ -213,6 +218,12 @@ function start()
         if SI.went_down(user_input_state.keyboard_buttons[Int(GLFW.KEY_D) + 1])
             if IS_DEBUG
                 DEBUG_INFO.show_messages = !DEBUG_INFO.show_messages
+            end
+        end
+
+        if SI.went_down(user_input_state.keyboard_buttons[Int(GLFW.KEY_C) + 1])
+            if IS_DEBUG
+                DEBUG_INFO.show_collision_boxes = !DEBUG_INFO.show_collision_boxes
             end
         end
 
@@ -292,7 +303,11 @@ function start()
 
         draw_start_time = get_time(reference_time)
         for drawable in draw_list
-            SD.draw!(image, drawable)
+            if isa(drawable, ShapeDrawable)
+                SD.draw!(image, drawable.shape, drawable.color)
+            else
+                SD.draw!(image, drawable)
+            end
         end
         draw_end_time = get_time(reference_time)
         if IS_DEBUG
