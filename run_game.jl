@@ -170,7 +170,7 @@ function start()
 
     ui_context = SI.UIContext(user_interaction_state, user_input_state, layout, COLORS, draw_list)
 
-    i = 0
+    frame_number = 0
 
     max_frames_per_second = 60
     min_ns_per_frame = 1_000_000_000 ÷ max_frames_per_second
@@ -218,7 +218,7 @@ function start()
         if IS_DEBUG
             push!(DEBUG_INFO.messages, "Press the escape key to quit")
 
-            push!(DEBUG_INFO.messages, "previous frame number: $(i)")
+            push!(DEBUG_INFO.messages, "previous frame number: $(frame_number)")
 
             push!(DEBUG_INFO.messages, "avg. total time spent per frame: $(round((last(DEBUG_INFO.frame_start_time_buffer) - first(DEBUG_INFO.frame_start_time_buffer)) / (1e6 * (length(DEBUG_INFO.frame_start_time_buffer) - 1)), digits = 2)) ms")
 
@@ -284,7 +284,7 @@ function start()
 
         GLFW.PollEvents()
 
-        i = i + 1
+        frame_number = frame_number + 1
 
         sleep_time_theoretical = max(0, min_ns_per_frame - (get_time(reference_time) - frame_start_time))
         if IS_DEBUG
