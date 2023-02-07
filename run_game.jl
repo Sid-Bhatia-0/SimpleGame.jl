@@ -170,6 +170,7 @@ function start()
     add_entity!(entities, Entity(
         true,
         SD.Point(1, 1),
+        null(CollisionBox{Int}),
         load_texture(texture_atlas, "assets/background.png"),
         null(AnimationState{Int}),
     ))
@@ -177,6 +178,7 @@ function start()
     add_entity!(entities, Entity(
         true,
         SD.Point(540, 960),
+        CollisionBox(SD.Rectangle(SD.Point(540, 960), 32 * 4, 24 * 4)),
         load_texture(texture_atlas, "assets/burning_loop_1.png", length_scale = 4),
         AnimationState(1, 8, 100_000_000, 1),
     ))
@@ -292,7 +294,11 @@ function start()
 
         draw_start_time = get_time(reference_time)
         for drawable in draw_list
-            SD.draw!(image, drawable)
+            if isa(drawable, ShapeDrawable)
+                SD.draw!(image, drawable.shape, drawable.color)
+            else
+                SD.draw!(image, drawable)
+            end
         end
         draw_end_time = get_time(reference_time)
         if IS_DEBUG
