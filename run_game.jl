@@ -182,7 +182,7 @@ function start()
     add_entity!(entities, Entity(
         true,
         Position(540.0, 960.0),
-        InvVelocity(0.001, 0.001),
+        InvVelocity(0.1, 0.1),
         CollisionBox(SD.Rectangle(SD.Point(1, 1), 32 * 4, 24 * 4)),
         load_texture(texture_atlas, "assets/burning_loop_1.png", length_scale = 4),
         AnimationState(1, 8, 0.5, 0.0),
