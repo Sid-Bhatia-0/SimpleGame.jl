@@ -173,7 +173,7 @@ function start()
     add_entity!(entities, Entity(
         true,
         SD.Point(1, 1),
-        null(InvVelocity{Int}),
+        null(InvVelocity),
         null(CollisionBox),
         load_texture(texture_atlas, "assets/background.png"),
         null(AnimationState),
@@ -191,7 +191,7 @@ function start()
     add_entity!(entities, Entity(
         true,
         SD.Point(975, 1),
-        null(InvVelocity{Int}),
+        null(InvVelocity),
         CollisionBox(SD.Rectangle(SD.Point(1, 1), 106, 1920)),
         null(TextureIndex),
         null(AnimationState),
