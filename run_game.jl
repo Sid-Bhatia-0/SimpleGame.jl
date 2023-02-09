@@ -168,15 +168,15 @@ function start()
     texture_atlas = TextureAtlas(color_type[])
 
     # entities
-    entities = Entity{Int}[]
+    entities = Entity[]
 
     add_entity!(entities, Entity(
         true,
         SD.Point(1, 1),
-        null(InvVelocity{Int}),
-        null(CollisionBox{Int}),
+        null(InvVelocity),
+        null(CollisionBox),
         load_texture(texture_atlas, "assets/background.png"),
-        null(AnimationState{Int}),
+        null(AnimationState),
     ))
 
     add_entity!(entities, Entity(
@@ -191,10 +191,10 @@ function start()
     add_entity!(entities, Entity(
         true,
         SD.Point(975, 1),
-        null(InvVelocity{Int}),
+        null(InvVelocity),
         CollisionBox(SD.Rectangle(SD.Point(1, 1), 106, 1920)),
-        null(TextureIndex{Int}),
-        null(AnimationState{Int}),
+        null(TextureIndex),
+        null(AnimationState),
     ))
 
     draw_list = Any[]

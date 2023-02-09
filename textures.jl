@@ -1,23 +1,23 @@
-struct TextureIndex{I}
-    start::I
-    height::I
-    width::I
+struct TextureIndex
+    start::Int
+    height::Int
+    width::Int
 end
 
-struct AnimationState{I}
-    frame_number::I
-    num_frames::I
-    time_per_frame::I
-    time_alive::I
+struct AnimationState
+    frame_number::Int
+    num_frames::Int
+    time_per_frame::Int
+    time_alive::Int
 end
 
 struct TextureAtlas{C}
     data::Vector{C}
 end
 
-null(::Type{TextureIndex{I}}) where {I} = TextureIndex{I}(zero(I), zero(I), zero(I))
+null(::Type{TextureIndex}) = TextureIndex(0, 0, 0)
 
-null(::Type{AnimationState{I}}) where {I} = AnimationState{I}(zero(I), zero(I), zero(I), zero(I))
+null(::Type{AnimationState}) = AnimationState(0, 0, 0, 0)
 
 function load_texture(texture_atlas, filename; length_scale = 1)
     data = texture_atlas.data
