@@ -168,7 +168,7 @@ function start()
     texture_atlas = TextureAtlas(color_type[])
 
     # entities
-    entities = Entity{Int}[]
+    entities = Entity[]
 
     add_entity!(entities, Entity(
         true,

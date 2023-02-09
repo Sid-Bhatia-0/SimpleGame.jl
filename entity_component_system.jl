@@ -11,9 +11,9 @@ struct ShapeDrawable{S, C}
     color::C
 end
 
-struct Entity{I}
+struct Entity
     is_alive::Bool
-    position::SD.Point{I}
+    position::SD.Point{Int}
     inv_velocity::InvVelocity
     collision_box::CollisionBox
     texture_index::TextureIndex
