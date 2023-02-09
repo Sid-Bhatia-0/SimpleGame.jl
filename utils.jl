@@ -1,19 +1,21 @@
 import GLFW
 import SimpleIMGUI as SI
 
-function get_time(reference_time)
-    # get time since reference_time
-    # places an upper bound on how much time can the program be running until time wraps around giving meaningless values
-    # the conversion to Int will actually throw an error when that happens
+# function get_time(reference_time)
+    # # get time since reference_time
+    # # places an upper bound on how much time can the program be running until time wraps around giving meaningless values
+    # # the conversion to Int will actually throw an error when that happens
 
-    t = time_ns()
+    # t = time_ns()
 
-    if t >= reference_time
-        return Int(t - reference_time)
-    else
-        return Int(t + (typemax(t) - reference_time))
-    end
-end
+    # if t >= reference_time
+        # return Int(t - reference_time)
+    # else
+        # return Int(t + (typemax(t) - reference_time))
+    # end
+# end
+
+get_time(reference_time) = return time() - reference_time
 
 function update_button(button, action)
     if action == GLFW.PRESS

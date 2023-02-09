@@ -3,7 +3,8 @@ struct CollisionBox
 end
 
 struct InvVelocity
-    vector::SD.Point{Int}
+    x::Float64
+    y::Float64
 end
 
 struct ShapeDrawable{S, C}
@@ -32,7 +33,7 @@ isnull(collision_box::CollisionBox) = collision_box == null(typeof(collision_box
 
 is_collidable(entity) = !isnull(entity.collision_box)
 
-null(::Type{InvVelocity}) = InvVelocity(SD.Point(0, 0))
+null(::Type{InvVelocity}) = InvVelocity(0.0, 0.0)
 
 isnull(inv_velocity::InvVelocity) = inv_velocity == null(typeof(inv_velocity))
 
@@ -50,11 +51,11 @@ function add_entity!(entities, entity)
     return length(entities)
 end
 
-move(position, inv_velocity, simulation_time) = position + simulation_time ÷ inv_velocity
+move(position, inv_velocity, simulation_time) = round(Int, position + simulation_time / inv_velocity)
 
 function move(position::SD.Point, inv_velocity::InvVelocity, simulation_time)
-    i = move(position.i, inv_velocity.vector.i, simulation_time)
-    j = move(position.j, inv_velocity.vector.j, simulation_time)
+    i = move(position.i, inv_velocity.x, simulation_time)
+    j = move(position.j, inv_velocity.y, simulation_time)
     return SD.Point(i, j)
 end
 
@@ -67,7 +68,7 @@ function physics_system!(entities, simulation_time)
                 entity.inv_velocity,
                 entity.collision_box,
                 entity.texture_index,
-                animate(entity.animation_state, simulation_time),
+                entity.animation_state,
             )
         end
     end
