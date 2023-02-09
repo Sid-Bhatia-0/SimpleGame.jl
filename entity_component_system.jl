@@ -2,6 +2,10 @@ struct CollisionBox{I}
     shape::SD.Rectangle{I}
 end
 
+struct InvVelocity{I}
+    vector::SD.Point{I}
+end
+
 struct ShapeDrawable{S, C}
     shape::S
     color::C
@@ -10,6 +14,7 @@ end
 struct Entity{I}
     is_alive::Bool
     position::SD.Point{I}
+    inv_velocity::InvVelocity{I}
     collision_box::CollisionBox{I}
     texture_index::TextureIndex{I}
     animation_state::AnimationState{I}
@@ -27,6 +32,12 @@ isnull(collision_box::CollisionBox) = collision_box == null(typeof(collision_box
 
 is_collidable(entity) = !isnull(entity.collision_box)
 
+null(::Type{InvVelocity{I}}) where {I} = InvVelocity(SD.Point(zero(I), zero(I)))
+
+isnull(inv_velocity::InvVelocity) = inv_velocity == null(typeof(inv_velocity))
+
+is_movable(entity) = !isnull(entity.inv_velocity)
+
 function add_entity!(entities, entity)
     for (i, entity_i) in enumerate(entities)
         if !is_alive(entity_i)
@@ -39,12 +50,36 @@ function add_entity!(entities, entity)
     return length(entities)
 end
 
+move(position, inv_velocity, simulation_time) = position + simulation_time ÷ inv_velocity
+
+function move(position::SD.Point, inv_velocity::InvVelocity, simulation_time)
+    i = move(position.i, inv_velocity.vector.i, simulation_time)
+    j = move(position.j, inv_velocity.vector.j, simulation_time)
+    return SD.Point(i, j)
+end
+
+function physics_system!(entities, simulation_time)
+    for (i, entity) in enumerate(entities)
+        if is_alive(entity) && is_movable(entity)
+            entities[i] = typeof(entity)(
+                entity.is_alive,
+                move(entity.position, entity.inv_velocity, simulation_time),
+                entity.inv_velocity,
+                entity.collision_box,
+                entity.texture_index,
+                animate(entity.animation_state, simulation_time),
+            )
+        end
+    end
+end
+
 function animation_system!(entities, simulation_time)
     for (i, entity) in enumerate(entities)
         if is_alive(entity) && is_animatable(entity)
             entities[i] = typeof(entity)(
                 entity.is_alive,
                 entity.position,
+                entity.inv_velocity,
                 entity.collision_box,
                 entity.texture_index,
                 animate(entity.animation_state, simulation_time),

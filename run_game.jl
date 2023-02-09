@@ -173,6 +173,7 @@ function start()
     add_entity!(entities, Entity(
         true,
         SD.Point(1, 1),
+        null(InvVelocity{Int}),
         null(CollisionBox{Int}),
         load_texture(texture_atlas, "assets/background.png"),
         null(AnimationState{Int}),
@@ -181,9 +182,19 @@ function start()
     add_entity!(entities, Entity(
         true,
         SD.Point(540, 960),
+        InvVelocity(SD.Point(10_000_000, 10_000_000)),
         CollisionBox(SD.Rectangle(SD.Point(1, 1), 32 * 4, 24 * 4)),
         load_texture(texture_atlas, "assets/burning_loop_1.png", length_scale = 4),
         AnimationState(1, 8, 100_000_000, 1),
+    ))
+
+    add_entity!(entities, Entity(
+        true,
+        SD.Point(975, 1),
+        null(InvVelocity{Int}),
+        CollisionBox(SD.Rectangle(SD.Point(1, 1), 106, 1920)),
+        null(TextureIndex{Int}),
+        null(AnimationState{Int}),
     ))
 
     draw_list = Any[]
@@ -236,6 +247,8 @@ function start()
         if IS_DEBUG
             push!(DEBUG_INFO.simulation_time_buffer, simulation_time)
         end
+
+        physics_system!(entities, simulation_time)
 
         animation_system_start_time = get_time(reference_time)
         animation_system!(entities, simulation_time)
