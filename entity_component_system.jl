@@ -17,7 +17,7 @@ struct Entity{I}
     inv_velocity::InvVelocity{I}
     collision_box::CollisionBox{I}
     texture_index::TextureIndex
-    animation_state::AnimationState{I}
+    animation_state::AnimationState
 end
 
 is_alive(entity) = entity.is_alive

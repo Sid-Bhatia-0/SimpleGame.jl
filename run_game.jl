@@ -176,7 +176,7 @@ function start()
         null(InvVelocity{Int}),
         null(CollisionBox{Int}),
         load_texture(texture_atlas, "assets/background.png"),
-        null(AnimationState{Int}),
+        null(AnimationState),
     ))
 
     add_entity!(entities, Entity(
@@ -194,7 +194,7 @@ function start()
         null(InvVelocity{Int}),
         CollisionBox(SD.Rectangle(SD.Point(1, 1), 106, 1920)),
         null(TextureIndex),
-        null(AnimationState{Int}),
+        null(AnimationState),
     ))
 
     draw_list = Any[]
