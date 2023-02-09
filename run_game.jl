@@ -174,7 +174,7 @@ function start()
         true,
         SD.Point(1, 1),
         null(InvVelocity{Int}),
-        null(CollisionBox{Int}),
+        null(CollisionBox),
         load_texture(texture_atlas, "assets/background.png"),
         null(AnimationState),
     ))

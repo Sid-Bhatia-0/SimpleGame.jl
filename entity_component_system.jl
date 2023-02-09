@@ -1,5 +1,5 @@
-struct CollisionBox{I}
-    shape::SD.Rectangle{I}
+struct CollisionBox
+    shape::SD.Rectangle{Int}
 end
 
 struct InvVelocity{I}
@@ -15,7 +15,7 @@ struct Entity{I}
     is_alive::Bool
     position::SD.Point{I}
     inv_velocity::InvVelocity{I}
-    collision_box::CollisionBox{I}
+    collision_box::CollisionBox
     texture_index::TextureIndex
     animation_state::AnimationState
 end
@@ -26,7 +26,7 @@ is_drawable(entity) = entity.texture_index.start > zero(entity.texture_index.sta
 
 is_animatable(entity) = entity.animation_state.num_frames > one(entity.animation_state.num_frames)
 
-null(::Type{CollisionBox{I}}) where {I} = CollisionBox(SD.Rectangle(SD.Point(zero(I), zero(I)), zero(I), zero(I)))
+null(::Type{CollisionBox}) = CollisionBox(SD.Rectangle(SD.Point(0, 0), 0, 0))
 
 isnull(collision_box::CollisionBox) = collision_box == null(typeof(collision_box))
 
