@@ -2,6 +2,11 @@ struct CollisionBox
     shape::SD.Rectangle{Int}
 end
 
+struct Position
+    x::Float64
+    y::Float64
+end
+
 struct InvVelocity
     x::Float64
     y::Float64
@@ -14,7 +19,7 @@ end
 
 struct Entity
     is_alive::Bool
-    position::SD.Point{Int}
+    position::Position
     inv_velocity::InvVelocity
     collision_box::CollisionBox
     texture_index::TextureIndex
@@ -39,6 +44,8 @@ isnull(inv_velocity::InvVelocity) = inv_velocity == null(typeof(inv_velocity))
 
 is_movable(entity) = !isnull(entity.inv_velocity)
 
+get_point(position::Position) = SD.Point(round(Int, position.x, RoundDown), round(Int, position.y, RoundDown))
+
 function add_entity!(entities, entity)
     for (i, entity_i) in enumerate(entities)
         if !is_alive(entity_i)
@@ -51,12 +58,12 @@ function add_entity!(entities, entity)
     return length(entities)
 end
 
-move(position, inv_velocity, simulation_time) = round(Int, position + simulation_time / inv_velocity)
+move(position, inv_velocity, simulation_time) = position + simulation_time / inv_velocity
 
-function move(position::SD.Point, inv_velocity::InvVelocity, simulation_time)
-    i = move(position.i, inv_velocity.x, simulation_time)
-    j = move(position.j, inv_velocity.y, simulation_time)
-    return SD.Point(i, j)
+function move(position::Position, inv_velocity::InvVelocity, simulation_time)
+    i = move(position.x, inv_velocity.x, simulation_time)
+    j = move(position.y, inv_velocity.y, simulation_time)
+    return Position(i, j)
 end
 
 function physics_system!(entities, simulation_time)
@@ -94,16 +101,17 @@ function drawing_system!(draw_list, entities, texture_atlas)
         if is_alive(entity)
             if is_drawable(entity)
                 if is_animatable(entity)
-                    push!(draw_list, SD.Image(entity.position, get_texture(texture_atlas, entity.texture_index, entity.animation_state)))
+                    push!(draw_list, SD.Image(get_point(entity.position), get_texture(texture_atlas, entity.texture_index, entity.animation_state)))
                 else
-                    push!(draw_list, SD.Image(entity.position, get_texture(texture_atlas, entity.texture_index)))
+                    push!(draw_list, SD.Image(get_point(entity.position), get_texture(texture_atlas, entity.texture_index)))
                 end
 
             end
 
             if DEBUG_INFO.show_collision_boxes
                 if is_collidable(entity)
-                    push!(draw_list, ShapeDrawable(SD.move(entity.collision_box.shape, entity.position.i - 1, entity.position.j -1), COLORS[Integer(SI.COLOR_INDEX_TEXT)]))
+                    point = get_point(entity.position)
+                    push!(draw_list, ShapeDrawable(SD.move(entity.collision_box.shape, point.i - 1, point.j -1), COLORS[Integer(SI.COLOR_INDEX_TEXT)]))
                 end
             end
         end
