@@ -193,7 +193,7 @@ function start()
         SD.Point(975, 1),
         null(InvVelocity{Int}),
         CollisionBox(SD.Rectangle(SD.Point(1, 1), 106, 1920)),
-        null(TextureIndex{Int}),
+        null(TextureIndex),
         null(AnimationState{Int}),
     ))
 

@@ -1,7 +1,7 @@
-struct TextureIndex{I}
-    start::I
-    height::I
-    width::I
+struct TextureIndex
+    start::Int
+    height::Int
+    width::Int
 end
 
 struct AnimationState{I}
@@ -15,7 +15,7 @@ struct TextureAtlas{C}
     data::Vector{C}
 end
 
-null(::Type{TextureIndex{I}}) where {I} = TextureIndex{I}(zero(I), zero(I), zero(I))
+null(::Type{TextureIndex}) = TextureIndex(0, 0, 0)
 
 null(::Type{AnimationState{I}}) where {I} = AnimationState{I}(zero(I), zero(I), zero(I), zero(I))
 

@@ -16,7 +16,7 @@ struct Entity{I}
     position::SD.Point{I}
     inv_velocity::InvVelocity{I}
     collision_box::CollisionBox{I}
-    texture_index::TextureIndex{I}
+    texture_index::TextureIndex
     animation_state::AnimationState{I}
 end
 
