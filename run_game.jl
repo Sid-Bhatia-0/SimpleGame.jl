@@ -1,3 +1,4 @@
+import Accessors
 import ModernGL as MGL
 import DataStructures as DS
 import GLFW
@@ -182,7 +183,7 @@ function start()
     add_entity!(entities, Entity(
         true,
         Position(540.0, 960.0),
-        Velocity(10.0, 10.0),
+        Velocity(0.0, 0.0),
         CollisionBox(SD.Rectangle(SD.Point(1, 1), 32 * 4, 24 * 4)),
         load_texture(texture_atlas, "assets/burning_loop_1.png", length_scale = 4),
         AnimationState(1, 8, 0.5, 0.0),
@@ -209,6 +210,10 @@ function start()
     reference_time = time()
 
     while !GLFW.WindowShouldClose(window)
+        if IS_DEBUG
+            empty!(DEBUG_INFO.messages)
+        end
+
         frame_start_time = get_time(reference_time)
         if IS_DEBUG
             push!(DEBUG_INFO.frame_start_time_buffer, frame_start_time)
@@ -238,10 +243,31 @@ function start()
             end
         end
 
-        layout.reference_bounding_box = SD.Rectangle(SD.Point(1, 1), image_height, image_width)
-        if IS_DEBUG
-            empty!(DEBUG_INFO.messages)
+        player = entities[2]
+        key_up_ended_down = user_input_state.keyboard_buttons[Int(GLFW.KEY_UP) + 1].ended_down
+        key_down_ended_down = user_input_state.keyboard_buttons[Int(GLFW.KEY_DOWN) + 1].ended_down
+
+        if key_up_ended_down && !key_down_ended_down
+            entities[2] = (Accessors.@set player.velocity.x = -100.0)
+        elseif !key_up_ended_down && key_down_ended_down
+            entities[2] = (Accessors.@set player.velocity.x = 100.0)
+        else
+            entities[2] = (Accessors.@set player.velocity.x = 0.0)
         end
+
+        player = entities[2]
+        key_left_ended_down = user_input_state.keyboard_buttons[Int(GLFW.KEY_LEFT) + 1].ended_down
+        key_right_ended_down = user_input_state.keyboard_buttons[Int(GLFW.KEY_RIGHT) + 1].ended_down
+
+        if key_left_ended_down && !key_right_ended_down
+            entities[2] = (Accessors.@set player.velocity.y = -100.0)
+        elseif !key_left_ended_down && key_right_ended_down
+            entities[2] = (Accessors.@set player.velocity.y = 100.0)
+        else
+            entities[2] = (Accessors.@set player.velocity.y = 0.0)
+        end
+
+        layout.reference_bounding_box = SD.Rectangle(SD.Point(1, 1), image_height, image_width)
 
         simulation_time = min_seconds_per_frame
         if IS_DEBUG
