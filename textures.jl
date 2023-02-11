@@ -7,7 +7,7 @@ end
 struct AnimationState
     frame_number::Int
     num_frames::Int
-    time_per_frame::Float64
+    duration::Float64
     time_alive::Float64
 end
 
@@ -76,8 +76,8 @@ get_texture(texture_atlas::TextureAtlas, texture_index::TextureIndex) = get_text
 
 get_texture(texture_atlas::TextureAtlas, texture_index::TextureIndex, animation_state::AnimationState) = get_texture(texture_atlas.data, texture_index.start, texture_index.height, texture_index.width, animation_state.frame_number, animation_state.num_frames)
 
-function get_frame_number(time_alive, num_frames, time_per_frame)
-    i = round(Int, time_alive / time_per_frame, RoundUp)
+function get_frame_number(time_alive, num_frames, duration)
+    i = round(Int, time_alive * num_frames / duration, RoundUp)
     frame_number = mod1(i, num_frames)
     return frame_number
 end
@@ -85,16 +85,16 @@ end
 function animate(animation_state, simulation_time)
     frame_number = animation_state.frame_number
     num_frames = animation_state.num_frames
-    time_per_frame = animation_state.time_per_frame
+    duration = animation_state.duration
     time_alive = animation_state.time_alive
 
     time_alive = time_alive + simulation_time
-    frame_number = get_frame_number(time_alive, num_frames, time_per_frame)
+    frame_number = get_frame_number(time_alive, num_frames, duration)
 
     return typeof(animation_state)(
         frame_number,
         num_frames,
-        time_per_frame,
+        duration,
         time_alive,
     )
 end
