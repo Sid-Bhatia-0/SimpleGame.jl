@@ -244,10 +244,27 @@ function start()
         end
 
         player = entities[2]
-        if user_input_state.keyboard_buttons[Int(GLFW.KEY_UP) + 1].ended_down
-            entities[2] = (Accessors.@set player.velocity = Velocity(10.0, 10.0))
+        key_up_ended_down = user_input_state.keyboard_buttons[Int(GLFW.KEY_UP) + 1].ended_down
+        key_down_ended_down = user_input_state.keyboard_buttons[Int(GLFW.KEY_DOWN) + 1].ended_down
+
+        if key_up_ended_down && !key_down_ended_down
+            entities[2] = (Accessors.@set player.velocity.x = -100.0)
+        elseif !key_up_ended_down && key_down_ended_down
+            entities[2] = (Accessors.@set player.velocity.x = 100.0)
         else
-            entities[2] = (Accessors.@set player.velocity = Velocity(0.0, 0.0))
+            entities[2] = (Accessors.@set player.velocity.x = 0.0)
+        end
+
+        player = entities[2]
+        key_left_ended_down = user_input_state.keyboard_buttons[Int(GLFW.KEY_LEFT) + 1].ended_down
+        key_right_ended_down = user_input_state.keyboard_buttons[Int(GLFW.KEY_RIGHT) + 1].ended_down
+
+        if key_left_ended_down && !key_right_ended_down
+            entities[2] = (Accessors.@set player.velocity.y = -100.0)
+        elseif !key_left_ended_down && key_right_ended_down
+            entities[2] = (Accessors.@set player.velocity.y = 100.0)
+        else
+            entities[2] = (Accessors.@set player.velocity.y = 0.0)
         end
 
         layout.reference_bounding_box = SD.Rectangle(SD.Point(1, 1), image_height, image_width)
