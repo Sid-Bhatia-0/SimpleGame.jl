@@ -7,7 +7,7 @@ struct Position
     y::Float64
 end
 
-struct InvVelocity
+struct Velocity
     x::Float64
     y::Float64
 end
@@ -20,7 +20,7 @@ end
 struct Entity
     is_alive::Bool
     position::Position
-    inv_velocity::InvVelocity
+    velocity::Velocity
     collision_box::CollisionBox
     texture_index::TextureIndex
     animation_state::AnimationState
@@ -38,11 +38,11 @@ isnull(collision_box::CollisionBox) = collision_box == null(typeof(collision_box
 
 is_collidable(entity) = !isnull(entity.collision_box)
 
-null(::Type{InvVelocity}) = InvVelocity(0.0, 0.0)
+null(::Type{Velocity}) = Velocity(0.0, 0.0)
 
-isnull(inv_velocity::InvVelocity) = inv_velocity == null(typeof(inv_velocity))
+isnull(velocity::Velocity) = velocity == null(typeof(velocity))
 
-is_movable(entity) = !isnull(entity.inv_velocity)
+is_movable(entity) = !isnull(entity.velocity)
 
 get_point(position::Position) = SD.Point(round(Int, position.x, RoundDown), round(Int, position.y, RoundDown))
 
@@ -58,11 +58,11 @@ function add_entity!(entities, entity)
     return length(entities)
 end
 
-move(position, inv_velocity, simulation_time) = position + simulation_time / inv_velocity
+move(position, velocity, simulation_time) = position + simulation_time * velocity
 
-function move(position::Position, inv_velocity::InvVelocity, simulation_time)
-    i = move(position.x, inv_velocity.x, simulation_time)
-    j = move(position.y, inv_velocity.y, simulation_time)
+function move(position::Position, velocity::Velocity, simulation_time)
+    i = move(position.x, velocity.x, simulation_time)
+    j = move(position.y, velocity.y, simulation_time)
     return Position(i, j)
 end
 
@@ -71,8 +71,8 @@ function physics_system!(entities, simulation_time)
         if is_alive(entity) && is_movable(entity)
             entities[i] = typeof(entity)(
                 entity.is_alive,
-                move(entity.position, entity.inv_velocity, simulation_time),
-                entity.inv_velocity,
+                move(entity.position, entity.velocity, simulation_time),
+                entity.velocity,
                 entity.collision_box,
                 entity.texture_index,
                 entity.animation_state,
@@ -87,7 +87,7 @@ function animation_system!(entities, simulation_time)
             entities[i] = typeof(entity)(
                 entity.is_alive,
                 entity.position,
-                entity.inv_velocity,
+                entity.velocity,
                 entity.collision_box,
                 entity.texture_index,
                 animate(entity.animation_state, simulation_time),
