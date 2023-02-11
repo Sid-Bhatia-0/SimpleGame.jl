@@ -183,7 +183,7 @@ function start()
     add_entity!(entities, Entity(
         true,
         Position(540.0, 960.0),
-        Velocity(10.0, 10.0),
+        Velocity(0.0, 0.0),
         CollisionBox(SD.Rectangle(SD.Point(1, 1), 32 * 4, 24 * 4)),
         load_texture(texture_atlas, "assets/burning_loop_1.png", length_scale = 4),
         AnimationState(1, 8, 0.5, 0.0),
@@ -237,6 +237,13 @@ function start()
             if IS_DEBUG
                 DEBUG_INFO.show_collision_boxes = !DEBUG_INFO.show_collision_boxes
             end
+        end
+
+        player = entities[2]
+        if user_input_state.keyboard_buttons[Int(GLFW.KEY_UP) + 1].ended_down
+            entities[2] = (Accessors.@set player.velocity = Velocity(10.0, 10.0))
+        else
+            entities[2] = (Accessors.@set player.velocity = Velocity(0.0, 0.0))
         end
 
         layout.reference_bounding_box = SD.Rectangle(SD.Point(1, 1), image_height, image_width)
