@@ -58,20 +58,20 @@ function add_entity!(entities, entity)
     return length(entities)
 end
 
-move(position, velocity, simulation_time) = position + simulation_time * velocity
+move(position, velocity, dt) = position + dt * velocity
 
-function move(position::Position, velocity::Velocity, simulation_time)
-    i = move(position.x, velocity.x, simulation_time)
-    j = move(position.y, velocity.y, simulation_time)
+function move(position::Position, velocity::Velocity, dt)
+    i = move(position.x, velocity.x, dt)
+    j = move(position.y, velocity.y, dt)
     return Position(i, j)
 end
 
-function physics_system!(entities, simulation_time)
+function physics_system!(entities, dt)
     for (i, entity) in enumerate(entities)
         if is_alive(entity) && is_movable(entity)
             entities[i] = typeof(entity)(
                 entity.is_alive,
-                move(entity.position, entity.velocity, simulation_time),
+                move(entity.position, entity.velocity, dt),
                 entity.velocity,
                 entity.collision_box,
                 entity.texture_index,
@@ -81,7 +81,7 @@ function physics_system!(entities, simulation_time)
     end
 end
 
-function animation_system!(entities, simulation_time)
+function animation_system!(entities, dt)
     for (i, entity) in enumerate(entities)
         if is_alive(entity) && is_animatable(entity)
             entities[i] = typeof(entity)(
@@ -90,7 +90,7 @@ function animation_system!(entities, simulation_time)
                 entity.velocity,
                 entity.collision_box,
                 entity.texture_index,
-                animate(entity.animation_state, simulation_time),
+                animate(entity.animation_state, dt),
             )
         end
     end

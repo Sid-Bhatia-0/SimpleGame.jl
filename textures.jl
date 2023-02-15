@@ -82,13 +82,13 @@ function get_frame_number(time_alive, num_frames, duration)
     return frame_number
 end
 
-function animate(animation_state, simulation_time)
+function animate(animation_state, dt)
     frame_number = animation_state.frame_number
     num_frames = animation_state.num_frames
     duration = animation_state.duration
     time_alive = animation_state.time_alive
 
-    time_alive = time_alive + simulation_time
+    time_alive = time_alive + dt
     frame_number = get_frame_number(time_alive, num_frames, duration)
 
     return typeof(animation_state)(
