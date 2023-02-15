@@ -208,6 +208,7 @@ function start()
     min_seconds_per_frame = 1 / max_frames_per_second
 
     reference_time = time()
+    previous_frame_start_time = 0.0
 
     while !GLFW.WindowShouldClose(window)
         if IS_DEBUG
@@ -215,6 +216,9 @@ function start()
         end
 
         frame_start_time = get_time(reference_time)
+        previous_frame_end_time = frame_start_time
+        previous_frame_time = previous_frame_end_time - previous_frame_start_time
+        previous_frame_start_time = frame_start_time
         if IS_DEBUG
             push!(DEBUG_INFO.frame_start_time_buffer, frame_start_time)
         end
@@ -269,7 +273,7 @@ function start()
 
         layout.reference_bounding_box = SD.Rectangle(SD.Point(1, 1), image_height, image_width)
 
-        simulation_time = min_seconds_per_frame
+        simulation_time = previous_frame_time
         if IS_DEBUG
             push!(DEBUG_INFO.simulation_time_buffer, simulation_time)
         end
