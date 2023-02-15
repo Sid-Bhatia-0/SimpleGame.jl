@@ -17,7 +17,7 @@ mutable struct DebugInfo
     messages::Vector{String}
     frame_start_time_buffer::DS.CircularBuffer{Float64}
     event_poll_time_buffer::DS.CircularBuffer{Float64}
-    simulation_time_buffer::DS.CircularBuffer{Float64}
+    dt_buffer::DS.CircularBuffer{Float64}
     animation_system_time_buffer::DS.CircularBuffer{Float64}
     drawing_system_time_buffer::DS.CircularBuffer{Float64}
     draw_time_buffer::DS.CircularBuffer{Float64}
@@ -39,8 +39,8 @@ function DebugInfo()
     event_poll_time_buffer = DS.CircularBuffer{Float64}(sliding_window_size)
     push!(event_poll_time_buffer, 0.0)
 
-    simulation_time_buffer = DS.CircularBuffer{Float64}(sliding_window_size)
-    push!(simulation_time_buffer, 0.0)
+    dt_buffer = DS.CircularBuffer{Float64}(sliding_window_size)
+    push!(dt_buffer, 0.0)
 
     animation_system_time_buffer = DS.CircularBuffer{Float64}(sliding_window_size)
     push!(animation_system_time_buffer, 0.0)
@@ -69,7 +69,7 @@ function DebugInfo()
         messages,
         frame_start_time_buffer,
         event_poll_time_buffer,
-        simulation_time_buffer,
+        dt_buffer,
         animation_system_time_buffer,
         drawing_system_time_buffer,
         draw_time_buffer,
@@ -208,6 +208,7 @@ function start()
     min_seconds_per_frame = 1 / max_frames_per_second
 
     reference_time = time()
+    previous_frame_start_time = 0.0
 
     while !GLFW.WindowShouldClose(window)
         if IS_DEBUG
@@ -215,6 +216,9 @@ function start()
         end
 
         frame_start_time = get_time(reference_time)
+        previous_frame_end_time = frame_start_time
+        previous_frame_time = previous_frame_end_time - previous_frame_start_time
+        previous_frame_start_time = frame_start_time
         if IS_DEBUG
             push!(DEBUG_INFO.frame_start_time_buffer, frame_start_time)
         end
@@ -269,15 +273,15 @@ function start()
 
         layout.reference_bounding_box = SD.Rectangle(SD.Point(1, 1), image_height, image_width)
 
-        simulation_time = min_seconds_per_frame
+        dt = previous_frame_time
         if IS_DEBUG
-            push!(DEBUG_INFO.simulation_time_buffer, simulation_time)
+            push!(DEBUG_INFO.dt_buffer, dt)
         end
 
-        physics_system!(entities, simulation_time)
+        physics_system!(entities, dt)
 
         animation_system_start_time = get_time(reference_time)
-        animation_system!(entities, simulation_time)
+        animation_system!(entities, dt)
         animation_system_end_time = get_time(reference_time)
         if IS_DEBUG
             push!(DEBUG_INFO.animation_system_time_buffer, animation_system_end_time - animation_system_start_time)
@@ -299,7 +303,7 @@ function start()
 
             push!(DEBUG_INFO.messages, "avg. event poll time per frame: $(round(sum(DEBUG_INFO.event_poll_time_buffer) * 1000 / length(DEBUG_INFO.event_poll_time_buffer), digits = 2)) ms")
 
-            push!(DEBUG_INFO.messages, "avg. simulation time per frame: $(round(sum(DEBUG_INFO.simulation_time_buffer) * 1000 / length(DEBUG_INFO.simulation_time_buffer), digits = 2)) ms")
+            push!(DEBUG_INFO.messages, "avg. simulation time per frame: $(round(sum(DEBUG_INFO.dt_buffer) * 1000 / length(DEBUG_INFO.dt_buffer), digits = 2)) ms")
 
             push!(DEBUG_INFO.messages, "avg. animation system time per frame: $(round(sum(DEBUG_INFO.animation_system_time_buffer) * 1000 / length(DEBUG_INFO.animation_system_time_buffer), digits = 2)) ms")
 
