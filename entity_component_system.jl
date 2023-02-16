@@ -66,7 +66,7 @@ function move(position::Position, velocity::Velocity, dt)
     return Position(i, j)
 end
 
-function physics_system!(entities, dt)
+function update!(entities, dt)
     for (i, entity) in enumerate(entities)
         if is_alive(entity)
             if is_movable(entity)
