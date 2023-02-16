@@ -18,7 +18,7 @@ mutable struct DebugInfo
     frame_start_time_buffer::DS.CircularBuffer{Float64}
     event_poll_time_buffer::DS.CircularBuffer{Float64}
     dt_buffer::DS.CircularBuffer{Float64}
-    animation_system_time_buffer::DS.CircularBuffer{Float64}
+    update_time_buffer::DS.CircularBuffer{Float64}
     drawing_system_time_buffer::DS.CircularBuffer{Float64}
     draw_time_buffer::DS.CircularBuffer{Float64}
     texture_upload_time_buffer::DS.CircularBuffer{Float64}
@@ -42,8 +42,8 @@ function DebugInfo()
     dt_buffer = DS.CircularBuffer{Float64}(sliding_window_size)
     push!(dt_buffer, 0.0)
 
-    animation_system_time_buffer = DS.CircularBuffer{Float64}(sliding_window_size)
-    push!(animation_system_time_buffer, 0.0)
+    update_time_buffer = DS.CircularBuffer{Float64}(sliding_window_size)
+    push!(update_time_buffer, 0.0)
 
     drawing_system_time_buffer = DS.CircularBuffer{Float64}(sliding_window_size)
     push!(drawing_system_time_buffer, 0.0)
@@ -70,7 +70,7 @@ function DebugInfo()
         frame_start_time_buffer,
         event_poll_time_buffer,
         dt_buffer,
-        animation_system_time_buffer,
+        update_time_buffer,
         drawing_system_time_buffer,
         draw_time_buffer,
         texture_upload_time_buffer,
@@ -278,13 +278,11 @@ function start()
             push!(DEBUG_INFO.dt_buffer, dt)
         end
 
-        physics_system!(entities, dt)
-
-        animation_system_start_time = get_time(reference_time)
-        animation_system!(entities, dt)
-        animation_system_end_time = get_time(reference_time)
+        update_start_time = get_time(reference_time)
+        update!(entities, dt)
+        update_end_time = get_time(reference_time)
         if IS_DEBUG
-            push!(DEBUG_INFO.animation_system_time_buffer, animation_system_end_time - animation_system_start_time)
+            push!(DEBUG_INFO.update_time_buffer, update_end_time - update_start_time)
         end
 
         drawing_system_start_time = get_time(reference_time)
@@ -303,9 +301,9 @@ function start()
 
             push!(DEBUG_INFO.messages, "avg. event poll time per frame: $(round(sum(DEBUG_INFO.event_poll_time_buffer) * 1000 / length(DEBUG_INFO.event_poll_time_buffer), digits = 2)) ms")
 
-            push!(DEBUG_INFO.messages, "avg. simulation time per frame: $(round(sum(DEBUG_INFO.dt_buffer) * 1000 / length(DEBUG_INFO.dt_buffer), digits = 2)) ms")
+            push!(DEBUG_INFO.messages, "avg. dt per frame: $(round(sum(DEBUG_INFO.dt_buffer) * 1000 / length(DEBUG_INFO.dt_buffer), digits = 2)) ms")
 
-            push!(DEBUG_INFO.messages, "avg. animation system time per frame: $(round(sum(DEBUG_INFO.animation_system_time_buffer) * 1000 / length(DEBUG_INFO.animation_system_time_buffer), digits = 2)) ms")
+            push!(DEBUG_INFO.messages, "avg. update time per frame: $(round(sum(DEBUG_INFO.update_time_buffer) * 1000 / length(DEBUG_INFO.update_time_buffer), digits = 2)) ms")
 
             push!(DEBUG_INFO.messages, "avg. drawing system time per frame: $(round(sum(DEBUG_INFO.drawing_system_time_buffer) * 1000 / length(DEBUG_INFO.drawing_system_time_buffer), digits = 2)) ms")
 
