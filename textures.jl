@@ -7,8 +7,8 @@ end
 struct AnimationState
     frame_number::Int
     num_frames::Int
-    duration::Float64
-    time_alive::Float64
+    time_per_frame::Int
+    time_alive::Int
 end
 
 struct TextureAtlas{C}
@@ -17,7 +17,7 @@ end
 
 null(::Type{TextureIndex}) = TextureIndex(0, 0, 0)
 
-null(::Type{AnimationState}) = AnimationState(0, 0, 0.0, 0.0)
+null(::Type{AnimationState}) = AnimationState(0, 0, 0, 0)
 
 function load_texture(texture_atlas, filename; length_scale = 1)
     data = texture_atlas.data
@@ -76,25 +76,25 @@ get_texture(texture_atlas::TextureAtlas, texture_index::TextureIndex) = get_text
 
 get_texture(texture_atlas::TextureAtlas, texture_index::TextureIndex, animation_state::AnimationState) = get_texture(texture_atlas.data, texture_index.start, texture_index.height, texture_index.width, animation_state.frame_number, animation_state.num_frames)
 
-function get_frame_number(time_alive, num_frames, duration)
-    i = round(Int, time_alive * num_frames / duration, RoundUp)
-    frame_number = mod1(i, num_frames)
+function get_frame_number(time_alive, num_frames, time_per_frame)
+    time_alive_wrapped = mod1(time_alive, num_frames * time_per_frame)
+    frame_number = div(time_alive_wrapped, time_per_frame, RoundUp)
     return frame_number
 end
 
 function animate(animation_state, dt)
     frame_number = animation_state.frame_number
     num_frames = animation_state.num_frames
-    duration = animation_state.duration
+    time_per_frame = animation_state.time_per_frame
     time_alive = animation_state.time_alive
 
     time_alive = time_alive + dt
-    frame_number = get_frame_number(time_alive, num_frames, duration)
+    frame_number = get_frame_number(time_alive, num_frames, time_per_frame)
 
     return typeof(animation_state)(
         frame_number,
         num_frames,
-        duration,
+        time_per_frame,
         time_alive,
     )
 end
