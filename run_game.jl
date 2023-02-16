@@ -301,7 +301,7 @@ function start()
 
             push!(DEBUG_INFO.messages, "avg. event poll time per frame: $(round(sum(DEBUG_INFO.event_poll_time_buffer) * 1000 / length(DEBUG_INFO.event_poll_time_buffer), digits = 2)) ms")
 
-            push!(DEBUG_INFO.messages, "avg. simulation time per frame: $(round(sum(DEBUG_INFO.dt_buffer) * 1000 / length(DEBUG_INFO.dt_buffer), digits = 2)) ms")
+            push!(DEBUG_INFO.messages, "avg. dt per frame: $(round(sum(DEBUG_INFO.dt_buffer) * 1000 / length(DEBUG_INFO.dt_buffer), digits = 2)) ms")
 
             push!(DEBUG_INFO.messages, "avg. update time per frame: $(round(sum(DEBUG_INFO.update_time_buffer) * 1000 / length(DEBUG_INFO.update_time_buffer), digits = 2)) ms")
 
