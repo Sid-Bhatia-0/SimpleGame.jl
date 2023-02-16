@@ -44,7 +44,7 @@ isnull(inv_velocity::InvVelocity) = inv_velocity == null(typeof(inv_velocity))
 
 is_movable(entity) = !isnull(entity.inv_velocity)
 
-get_point(position::Position) = SD.Point(round(Int, position.x, RoundDown), round(Int, position.y, RoundDown))
+get_point(position::Position) = SD.Point(position.x, position.y)
 
 function add_entity!(entities, entity)
     for (i, entity_i) in enumerate(entities)
