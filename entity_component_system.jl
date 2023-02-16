@@ -68,29 +68,26 @@ end
 
 function physics_system!(entities, dt)
     for (i, entity) in enumerate(entities)
-        if is_alive(entity) && is_movable(entity)
-            entities[i] = typeof(entity)(
-                entity.is_alive,
-                move(entity.position, entity.velocity, dt),
-                entity.velocity,
-                entity.collision_box,
-                entity.texture_index,
-                entity.animation_state,
-            )
-        end
-    end
-end
+        if is_alive(entity)
+            if is_movable(entity)
+                new_position = move(entity.position, entity.velocity, dt)
+            else
+                new_position = entity.position
+            end
 
-function animation_system!(entities, dt)
-    for (i, entity) in enumerate(entities)
-        if is_alive(entity) && is_animatable(entity)
+            if is_animatable(entity)
+                new_animation_state = animate(entity.animation_state, dt)
+            else
+                new_animation_state = entity.animation_state
+            end
+
             entities[i] = typeof(entity)(
                 entity.is_alive,
-                entity.position,
+                new_position,
                 entity.velocity,
                 entity.collision_box,
                 entity.texture_index,
-                animate(entity.animation_state, dt),
+                new_animation_state,
             )
         end
     end

@@ -278,10 +278,8 @@ function start()
             push!(DEBUG_INFO.dt_buffer, dt)
         end
 
-        physics_system!(entities, dt)
-
         animation_system_start_time = get_time(reference_time)
-        animation_system!(entities, dt)
+        physics_system!(entities, dt)
         animation_system_end_time = get_time(reference_time)
         if IS_DEBUG
             push!(DEBUG_INFO.animation_system_time_buffer, animation_system_end_time - animation_system_start_time)
