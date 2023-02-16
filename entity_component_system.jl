@@ -3,8 +3,8 @@ struct CollisionBox
 end
 
 struct Position
-    x::Float64
-    y::Float64
+    x::Int
+    y::Int
 end
 
 struct Velocity
