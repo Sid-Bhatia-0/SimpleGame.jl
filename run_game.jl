@@ -15,16 +15,16 @@ mutable struct DebugInfo
     show_messages::Bool
     show_collision_boxes::Bool
     messages::Vector{String}
-    frame_start_time_buffer::DS.CircularBuffer{Float64}
-    event_poll_time_buffer::DS.CircularBuffer{Float64}
-    dt_buffer::DS.CircularBuffer{Float64}
-    update_time_buffer::DS.CircularBuffer{Float64}
-    drawing_system_time_buffer::DS.CircularBuffer{Float64}
-    draw_time_buffer::DS.CircularBuffer{Float64}
-    texture_upload_time_buffer::DS.CircularBuffer{Float64}
-    buffer_swap_time_buffer::DS.CircularBuffer{Float64}
-    sleep_time_theoretical_buffer::DS.CircularBuffer{Float64}
-    sleep_time_observed_buffer::DS.CircularBuffer{Float64}
+    frame_start_time_buffer::DS.CircularBuffer{Int}
+    event_poll_time_buffer::DS.CircularBuffer{Int}
+    dt_buffer::DS.CircularBuffer{Int}
+    update_time_buffer::DS.CircularBuffer{Int}
+    drawing_system_time_buffer::DS.CircularBuffer{Int}
+    draw_time_buffer::DS.CircularBuffer{Int}
+    texture_upload_time_buffer::DS.CircularBuffer{Int}
+    buffer_swap_time_buffer::DS.CircularBuffer{Int}
+    sleep_time_theoretical_buffer::DS.CircularBuffer{Int}
+    sleep_time_observed_buffer::DS.CircularBuffer{Int}
 end
 
 function DebugInfo()
@@ -33,35 +33,35 @@ function DebugInfo()
     messages = String[]
     sliding_window_size = 30
 
-    frame_start_time_buffer = DS.CircularBuffer{Float64}(sliding_window_size + 1)
-    push!(frame_start_time_buffer, 0.0)
+    frame_start_time_buffer = DS.CircularBuffer{Int}(sliding_window_size + 1)
+    push!(frame_start_time_buffer, 0)
 
-    event_poll_time_buffer = DS.CircularBuffer{Float64}(sliding_window_size)
-    push!(event_poll_time_buffer, 0.0)
+    event_poll_time_buffer = DS.CircularBuffer{Int}(sliding_window_size)
+    push!(event_poll_time_buffer, 0)
 
-    dt_buffer = DS.CircularBuffer{Float64}(sliding_window_size)
-    push!(dt_buffer, 0.0)
+    dt_buffer = DS.CircularBuffer{Int}(sliding_window_size)
+    push!(dt_buffer, 0)
 
-    update_time_buffer = DS.CircularBuffer{Float64}(sliding_window_size)
-    push!(update_time_buffer, 0.0)
+    update_time_buffer = DS.CircularBuffer{Int}(sliding_window_size)
+    push!(update_time_buffer, 0)
 
-    drawing_system_time_buffer = DS.CircularBuffer{Float64}(sliding_window_size)
-    push!(drawing_system_time_buffer, 0.0)
+    drawing_system_time_buffer = DS.CircularBuffer{Int}(sliding_window_size)
+    push!(drawing_system_time_buffer, 0)
 
-    draw_time_buffer = DS.CircularBuffer{Float64}(sliding_window_size)
-    push!(draw_time_buffer, 0.0)
+    draw_time_buffer = DS.CircularBuffer{Int}(sliding_window_size)
+    push!(draw_time_buffer, 0)
 
-    texture_upload_time_buffer = DS.CircularBuffer{Float64}(sliding_window_size)
-    push!(texture_upload_time_buffer, 0.0)
+    texture_upload_time_buffer = DS.CircularBuffer{Int}(sliding_window_size)
+    push!(texture_upload_time_buffer, 0)
 
-    sleep_time_theoretical_buffer = DS.CircularBuffer{Float64}(sliding_window_size)
-    push!(sleep_time_theoretical_buffer, 0.0)
+    sleep_time_theoretical_buffer = DS.CircularBuffer{Int}(sliding_window_size)
+    push!(sleep_time_theoretical_buffer, 0)
 
-    sleep_time_observed_buffer = DS.CircularBuffer{Float64}(sliding_window_size)
-    push!(sleep_time_observed_buffer, 0.0)
+    sleep_time_observed_buffer = DS.CircularBuffer{Int}(sliding_window_size)
+    push!(sleep_time_observed_buffer, 0)
 
-    buffer_swap_time_buffer = DS.CircularBuffer{Float64}(sliding_window_size)
-    push!(buffer_swap_time_buffer, 0.0)
+    buffer_swap_time_buffer = DS.CircularBuffer{Int}(sliding_window_size)
+    push!(buffer_swap_time_buffer, 0)
 
     return DebugInfo(
         show_messages,
@@ -173,8 +173,8 @@ function start()
 
     add_entity!(entities, Entity(
         true,
-        Position(1.0, 1.0),
-        null(Velocity),
+        Position(1, 1),
+        null(InvVelocity),
         null(CollisionBox),
         load_texture(texture_atlas, "assets/background.png"),
         null(AnimationState),
@@ -182,17 +182,17 @@ function start()
 
     add_entity!(entities, Entity(
         true,
-        Position(540.0, 960.0),
-        Velocity(0.0, 0.0),
+        Position(540, 960),
+        InvVelocity(0, 0),
         CollisionBox(SD.Rectangle(SD.Point(1, 1), 32 * 4, 24 * 4)),
         load_texture(texture_atlas, "assets/burning_loop_1.png", length_scale = 4),
-        AnimationState(1, 8, 0.5, 0.0),
+        AnimationState(1, 8, 100_000_000, 1),
     ))
 
     add_entity!(entities, Entity(
         true,
-        Position(975.0, 1.0),
-        null(Velocity),
+        Position(975, 1),
+        null(InvVelocity),
         CollisionBox(SD.Rectangle(SD.Point(1, 1), 106, 1920)),
         null(TextureIndex),
         null(AnimationState),
@@ -205,10 +205,10 @@ function start()
     frame_number = 1
 
     max_frames_per_second = 60
-    min_seconds_per_frame = 1 / max_frames_per_second
+    min_ns_per_frame = 1_000_000_000 ÷ max_frames_per_second
 
-    reference_time = time()
-    previous_frame_start_time = 0.0
+    reference_time = time_ns()
+    previous_frame_start_time = 0
 
     while !GLFW.WindowShouldClose(window)
         if IS_DEBUG
@@ -252,11 +252,11 @@ function start()
         key_down_ended_down = user_input_state.keyboard_buttons[Int(GLFW.KEY_DOWN) + 1].ended_down
 
         if key_up_ended_down && !key_down_ended_down
-            entities[2] = (Accessors.@set player.velocity.x = -100.0)
+            entities[2] = (Accessors.@set player.inv_velocity.x = -1_000_000)
         elseif !key_up_ended_down && key_down_ended_down
-            entities[2] = (Accessors.@set player.velocity.x = 100.0)
+            entities[2] = (Accessors.@set player.inv_velocity.x = 1_000_000)
         else
-            entities[2] = (Accessors.@set player.velocity.x = 0.0)
+            entities[2] = (Accessors.@set player.inv_velocity.x = typemax(Int))
         end
 
         player = entities[2]
@@ -264,11 +264,11 @@ function start()
         key_right_ended_down = user_input_state.keyboard_buttons[Int(GLFW.KEY_RIGHT) + 1].ended_down
 
         if key_left_ended_down && !key_right_ended_down
-            entities[2] = (Accessors.@set player.velocity.y = -100.0)
+            entities[2] = (Accessors.@set player.inv_velocity.y = -1_000_000)
         elseif !key_left_ended_down && key_right_ended_down
-            entities[2] = (Accessors.@set player.velocity.y = 100.0)
+            entities[2] = (Accessors.@set player.inv_velocity.y = 1_000_000)
         else
-            entities[2] = (Accessors.@set player.velocity.y = 0.0)
+            entities[2] = (Accessors.@set player.inv_velocity.y = typemax(Int))
         end
 
         layout.reference_bounding_box = SD.Rectangle(SD.Point(1, 1), image_height, image_width)
@@ -297,25 +297,25 @@ function start()
 
             push!(DEBUG_INFO.messages, "previous frame number: $(frame_number)")
 
-            push!(DEBUG_INFO.messages, "avg. total time per frame: $(round((last(DEBUG_INFO.frame_start_time_buffer) - first(DEBUG_INFO.frame_start_time_buffer)) * 1000 / (length(DEBUG_INFO.frame_start_time_buffer) - 1), digits = 2)) ms")
+            push!(DEBUG_INFO.messages, "avg. total time per frame: $(round((last(DEBUG_INFO.frame_start_time_buffer) - first(DEBUG_INFO.frame_start_time_buffer)) / (1e6 * length(DEBUG_INFO.frame_start_time_buffer) - 1), digits = 2)) ms")
 
-            push!(DEBUG_INFO.messages, "avg. event poll time per frame: $(round(sum(DEBUG_INFO.event_poll_time_buffer) * 1000 / length(DEBUG_INFO.event_poll_time_buffer), digits = 2)) ms")
+            push!(DEBUG_INFO.messages, "avg. event poll time per frame: $(round(sum(DEBUG_INFO.event_poll_time_buffer) / (1e6 * length(DEBUG_INFO.event_poll_time_buffer)), digits = 2)) ms")
 
-            push!(DEBUG_INFO.messages, "avg. dt per frame: $(round(sum(DEBUG_INFO.dt_buffer) * 1000 / length(DEBUG_INFO.dt_buffer), digits = 2)) ms")
+            push!(DEBUG_INFO.messages, "avg. dt per frame: $(round(sum(DEBUG_INFO.dt_buffer) / (1e6 * length(DEBUG_INFO.dt_buffer)), digits = 2)) ms")
 
-            push!(DEBUG_INFO.messages, "avg. update time per frame: $(round(sum(DEBUG_INFO.update_time_buffer) * 1000 / length(DEBUG_INFO.update_time_buffer), digits = 2)) ms")
+            push!(DEBUG_INFO.messages, "avg. update time per frame: $(round(sum(DEBUG_INFO.update_time_buffer) / (1e6 * length(DEBUG_INFO.update_time_buffer)), digits = 2)) ms")
 
-            push!(DEBUG_INFO.messages, "avg. drawing system time per frame: $(round(sum(DEBUG_INFO.drawing_system_time_buffer) * 1000 / length(DEBUG_INFO.drawing_system_time_buffer), digits = 2)) ms")
+            push!(DEBUG_INFO.messages, "avg. drawing system time per frame: $(round(sum(DEBUG_INFO.drawing_system_time_buffer) / (1e6 * length(DEBUG_INFO.drawing_system_time_buffer)), digits = 2)) ms")
 
-            push!(DEBUG_INFO.messages, "avg. draw time per frame: $(round(sum(DEBUG_INFO.draw_time_buffer) * 1000 / length(DEBUG_INFO.draw_time_buffer), digits = 2)) ms")
+            push!(DEBUG_INFO.messages, "avg. draw time per frame: $(round(sum(DEBUG_INFO.draw_time_buffer) / (1e6 * length(DEBUG_INFO.draw_time_buffer)), digits = 2)) ms")
 
-            push!(DEBUG_INFO.messages, "avg. texture upload time per frame: $(round(sum(DEBUG_INFO.texture_upload_time_buffer) * 1000 / length(DEBUG_INFO.texture_upload_time_buffer), digits = 2)) ms")
+            push!(DEBUG_INFO.messages, "avg. texture upload time per frame: $(round(sum(DEBUG_INFO.texture_upload_time_buffer) / (1e6 * length(DEBUG_INFO.texture_upload_time_buffer)), digits = 2)) ms")
 
-            push!(DEBUG_INFO.messages, "avg. sleep time theoretical: $(round(sum(DEBUG_INFO.sleep_time_theoretical_buffer) * 1000 / length(DEBUG_INFO.sleep_time_theoretical_buffer), digits = 2)) ms")
+            push!(DEBUG_INFO.messages, "avg. sleep time theoretical: $(round(sum(DEBUG_INFO.sleep_time_theoretical_buffer) / (1e6 * length(DEBUG_INFO.sleep_time_theoretical_buffer)), digits = 2)) ms")
 
-            push!(DEBUG_INFO.messages, "avg. sleep time observed: $(round(sum(DEBUG_INFO.sleep_time_observed_buffer) * 1000 / length(DEBUG_INFO.sleep_time_observed_buffer), digits = 2)) ms")
+            push!(DEBUG_INFO.messages, "avg. sleep time observed: $(round(sum(DEBUG_INFO.sleep_time_observed_buffer) / (1e6 * length(DEBUG_INFO.sleep_time_observed_buffer)), digits = 2)) ms")
 
-            push!(DEBUG_INFO.messages, "avg. buffer swap time per frame: $(round(sum(DEBUG_INFO.buffer_swap_time_buffer) * 1000 / length(DEBUG_INFO.buffer_swap_time_buffer), digits = 2)) ms")
+            push!(DEBUG_INFO.messages, "avg. buffer swap time per frame: $(round(sum(DEBUG_INFO.buffer_swap_time_buffer) / (1e6 * length(DEBUG_INFO.buffer_swap_time_buffer)), digits = 2)) ms")
 
             push!(DEBUG_INFO.messages, "length(entities): $(length(entities))")
 
@@ -374,13 +374,13 @@ function start()
 
         frame_number = frame_number + 1
 
-        sleep_time_theoretical = max(0.0, min_seconds_per_frame - (get_time(reference_time) - frame_start_time))
+        sleep_time_theoretical = max(0, min_ns_per_frame - (get_time(reference_time) - frame_start_time))
         if IS_DEBUG
             push!(DEBUG_INFO.sleep_time_theoretical_buffer, sleep_time_theoretical)
         end
 
         sleep_start_time = get_time(reference_time)
-        sleep(sleep_time_theoretical)
+        sleep(sleep_time_theoretical / 1e9)
         sleep_end_time = get_time(reference_time)
         if IS_DEBUG
             push!(DEBUG_INFO.sleep_time_observed_buffer, sleep_end_time - sleep_start_time)
