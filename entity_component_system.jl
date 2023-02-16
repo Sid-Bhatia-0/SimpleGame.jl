@@ -7,9 +7,9 @@ struct Position
     y::Int
 end
 
-struct Velocity
-    x::Float64
-    y::Float64
+struct InvVelocity
+    x::Int
+    y::Int
 end
 
 struct ShapeDrawable{S, C}
@@ -20,7 +20,7 @@ end
 struct Entity
     is_alive::Bool
     position::Position
-    velocity::Velocity
+    inv_velocity::InvVelocity
     collision_box::CollisionBox
     texture_index::TextureIndex
     animation_state::AnimationState
@@ -38,11 +38,11 @@ isnull(collision_box::CollisionBox) = collision_box == null(typeof(collision_box
 
 is_collidable(entity) = !isnull(entity.collision_box)
 
-null(::Type{Velocity}) = Velocity(0.0, 0.0)
+null(::Type{InvVelocity}) = InvVelocity(0, 0)
 
-isnull(velocity::Velocity) = velocity == null(typeof(velocity))
+isnull(inv_velocity::InvVelocity) = inv_velocity == null(typeof(inv_velocity))
 
-is_movable(entity) = !isnull(entity.velocity)
+is_movable(entity) = !isnull(entity.inv_velocity)
 
 get_point(position::Position) = SD.Point(round(Int, position.x, RoundDown), round(Int, position.y, RoundDown))
 
@@ -58,11 +58,11 @@ function add_entity!(entities, entity)
     return length(entities)
 end
 
-move(position, velocity, dt) = position + dt * velocity
+move(position, inv_velocity, dt) = position + dt ÷ inv_velocity
 
-function move(position::Position, velocity::Velocity, dt)
-    i = move(position.x, velocity.x, dt)
-    j = move(position.y, velocity.y, dt)
+function move(position::Position, inv_velocity::InvVelocity, dt)
+    i = move(position.x, inv_velocity.x, dt)
+    j = move(position.y, inv_velocity.y, dt)
     return Position(i, j)
 end
 
@@ -70,7 +70,7 @@ function update!(entities, dt)
     for (i, entity) in enumerate(entities)
         if is_alive(entity)
             if is_movable(entity)
-                new_position = move(entity.position, entity.velocity, dt)
+                new_position = move(entity.position, entity.inv_velocity, dt)
             else
                 new_position = entity.position
             end
@@ -84,7 +84,7 @@ function update!(entities, dt)
             entities[i] = typeof(entity)(
                 entity.is_alive,
                 new_position,
-                entity.velocity,
+                entity.inv_velocity,
                 entity.collision_box,
                 entity.texture_index,
                 new_animation_state,

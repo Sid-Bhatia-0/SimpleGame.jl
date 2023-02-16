@@ -174,7 +174,7 @@ function start()
     add_entity!(entities, Entity(
         true,
         Position(1, 1),
-        null(Velocity),
+        null(InvVelocity),
         null(CollisionBox),
         load_texture(texture_atlas, "assets/background.png"),
         null(AnimationState),
@@ -183,7 +183,7 @@ function start()
     add_entity!(entities, Entity(
         true,
         Position(540, 960),
-        Velocity(0.0, 0.0),
+        InvVelocity(0, 0),
         CollisionBox(SD.Rectangle(SD.Point(1, 1), 32 * 4, 24 * 4)),
         load_texture(texture_atlas, "assets/burning_loop_1.png", length_scale = 4),
         AnimationState(1, 8, 100_000_000, 1),
@@ -192,7 +192,7 @@ function start()
     add_entity!(entities, Entity(
         true,
         Position(975, 1),
-        null(Velocity),
+        null(InvVelocity),
         CollisionBox(SD.Rectangle(SD.Point(1, 1), 106, 1920)),
         null(TextureIndex),
         null(AnimationState),
@@ -252,11 +252,11 @@ function start()
         key_down_ended_down = user_input_state.keyboard_buttons[Int(GLFW.KEY_DOWN) + 1].ended_down
 
         if key_up_ended_down && !key_down_ended_down
-            entities[2] = (Accessors.@set player.velocity.x = -100.0)
+            entities[2] = (Accessors.@set player.inv_velocity.x = -1_000_000)
         elseif !key_up_ended_down && key_down_ended_down
-            entities[2] = (Accessors.@set player.velocity.x = 100.0)
+            entities[2] = (Accessors.@set player.inv_velocity.x = 1_000_000)
         else
-            entities[2] = (Accessors.@set player.velocity.x = 0.0)
+            entities[2] = (Accessors.@set player.inv_velocity.x = 0)
         end
 
         player = entities[2]
@@ -264,11 +264,11 @@ function start()
         key_right_ended_down = user_input_state.keyboard_buttons[Int(GLFW.KEY_RIGHT) + 1].ended_down
 
         if key_left_ended_down && !key_right_ended_down
-            entities[2] = (Accessors.@set player.velocity.y = -100.0)
+            entities[2] = (Accessors.@set player.inv_velocity.y = -1_000_000)
         elseif !key_left_ended_down && key_right_ended_down
-            entities[2] = (Accessors.@set player.velocity.y = 100.0)
+            entities[2] = (Accessors.@set player.inv_velocity.y = 1_000_000)
         else
-            entities[2] = (Accessors.@set player.velocity.y = 0.0)
+            entities[2] = (Accessors.@set player.inv_velocity.y = 0)
         end
 
         layout.reference_bounding_box = SD.Rectangle(SD.Point(1, 1), image_height, image_width)
