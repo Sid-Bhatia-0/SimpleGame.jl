@@ -175,7 +175,7 @@ function start()
     add_entity!(entities, Entity(
         true,
         Point(1, 1),
-        null(InvVelocity),
+        Point(typemax(Int), typemax(Int)),
         null(CollisionBox),
         load_texture(texture_atlas, "assets/background.png"),
         null(AnimationState),
@@ -184,7 +184,7 @@ function start()
     add_entity!(entities, Entity(
         true,
         Point(540, 960),
-        InvVelocity(0, 0),
+        Point(typemax(Int), typemax(Int)),
         CollisionBox(SD.Rectangle(SD.Point(1, 1), 32 * 4, 24 * 4)),
         load_texture(texture_atlas, "assets/burning_loop_1.png", length_scale = 4),
         AnimationState(1, 8, 100_000_000, 1),
@@ -193,7 +193,7 @@ function start()
     add_entity!(entities, Entity(
         true,
         Point(975, 1),
-        null(InvVelocity),
+        Point(typemax(Int), typemax(Int)),
         CollisionBox(SD.Rectangle(SD.Point(1, 1), 106, 1920)),
         null(TextureIndex),
         null(AnimationState),

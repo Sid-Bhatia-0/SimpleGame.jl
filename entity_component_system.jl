@@ -2,11 +2,6 @@ struct CollisionBox
     shape::SD.Rectangle{Int}
 end
 
-struct InvVelocity
-    x::Int
-    y::Int
-end
-
 struct ShapeDrawable{S, C}
     shape::S
     color::C
@@ -15,7 +10,7 @@ end
 struct Entity
     is_alive::Bool
     position::Point
-    inv_velocity::InvVelocity
+    inv_velocity::Point
     collision_box::CollisionBox
     texture_index::TextureIndex
     animation_state::AnimationState
@@ -33,11 +28,7 @@ isnull(collision_box::CollisionBox) = collision_box == null(typeof(collision_box
 
 is_collidable(entity) = !isnull(entity.collision_box)
 
-null(::Type{InvVelocity}) = InvVelocity(0, 0)
-
-isnull(inv_velocity::InvVelocity) = inv_velocity == null(typeof(inv_velocity))
-
-is_movable(entity) = !isnull(entity.inv_velocity)
+is_movable(entity) = entity.inv_velocity != Point(typemax(Int), typemax(Int))
 
 get_point(position::Point) = SD.Point(position.x, position.y)
 
@@ -55,7 +46,7 @@ end
 
 move(position, inv_velocity, dt) = position + dt ÷ inv_velocity
 
-function move(position::Point, inv_velocity::InvVelocity, dt)
+function move(position::Point, inv_velocity::Point, dt)
     i = move(position.x, inv_velocity.x, dt)
     j = move(position.y, inv_velocity.y, dt)
     return Point(i, j)
