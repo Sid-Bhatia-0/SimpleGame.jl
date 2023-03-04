@@ -175,8 +175,8 @@ function start()
     add_entity!(entities, Entity(
         true,
         Vec(1, 1),
-        Vec(typemax(Int), typemax(Int)),
-        AABB(Vec(0, 0), -1, -1),
+        NULL_INV_VELOCITY,
+        NULL_COLLISION_BOX,
         load_texture(texture_atlas, "assets/background.png"),
         null(AnimationState),
     ))
@@ -184,7 +184,7 @@ function start()
     add_entity!(entities, Entity(
         true,
         Vec(540, 960),
-        Vec(typemax(Int), typemax(Int)),
+        NULL_INV_VELOCITY,
         AABB(Vec(1, 1), 32 * 4, 24 * 4),
         load_texture(texture_atlas, "assets/burning_loop_1.png", length_scale = 4),
         AnimationState(1, 8, 100_000_000, 1),
@@ -193,7 +193,7 @@ function start()
     add_entity!(entities, Entity(
         true,
         Vec(975, 1),
-        Vec(typemax(Int), typemax(Int)),
+        NULL_INV_VELOCITY,
         AABB(Vec(1, 1), 106, 1920),
         null(TextureIndex),
         null(AnimationState),

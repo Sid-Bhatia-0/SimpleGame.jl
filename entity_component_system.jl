@@ -12,15 +12,19 @@ struct Entity
     animation_state::AnimationState
 end
 
+const NULL_POSITION = Vec(typemin(Int), typemin(Int))
+const NULL_INV_VELOCITY = Vec(typemin(Int), typemin(Int))
+const NULL_COLLISION_BOX = AABB(Vec(typemin(Int), typemin(Int)), typemin(Int), typemin(Int))
+
 is_alive(entity) = entity.is_alive
 
 is_drawable(entity) = entity.texture_index.start > zero(entity.texture_index.start)
 
 is_animatable(entity) = entity.animation_state.num_frames > one(entity.animation_state.num_frames)
 
-is_collidable(entity) = entity.collision_box != AABB(Vec(0, 0), -1, -1)
+is_collidable(entity) = entity.collision_box != NULL_COLLISION_BOX
 
-is_movable(entity) = entity.inv_velocity != Vec(typemax(Int), typemax(Int))
+is_movable(entity) = entity.inv_velocity != NULL_INV_VELOCITY
 
 SD.Point(vec::Vec) = SD.Point(vec.x, vec.y)
 
