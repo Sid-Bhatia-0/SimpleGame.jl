@@ -51,6 +51,8 @@ function move(position::Vec, velocity::Vec, dt)
     return Vec(x, y)
 end
 
+get_absolute_collision_box(collision_box, position) = AABB(Vec(collision_box.position.x + position.x - one(position.x), collision_box.position.y + position.y - one(position.y)), collision_box.x_width, collision_box.y_width)
+
 function update!(entities, dt)
     while dt > zero(dt)
         push!(DEBUG_INFO.messages, "dt: $(dt)")
@@ -63,14 +65,7 @@ function update!(entities, dt)
             if is_alive(entity_i) && is_collidable(entity_i)
                 body_type_i = entity_i.body_type
                 collision_box_i = entity_i.collision_box
-                absolute_collision_box_i = AABB(
-                    Vec(
-                        collision_box_i.position.x + entity_i.position.x - one(entity_i.position.x),
-                        collision_box_i.position.y + entity_i.position.y - one(entity_i.position.y),
-                    ),
-                    collision_box_i.x_width,
-                    collision_box_i.y_width,
-                )
+                absolute_collision_box_i = get_absolute_collision_box(collision_box_i, entity_i.position)
                 velocity_i = entity_i.velocity
 
                 for j in i + 1 : length(entities)
@@ -79,14 +74,7 @@ function update!(entities, dt)
                     if is_alive(entity_j) && is_collidable(entity_j)
                         body_type_j = entity_j.body_type
                         collision_box_j = entity_j.collision_box
-                        absolute_collision_box_j = AABB(
-                            Vec(
-                                collision_box_j.position.x + entity_j.position.x - one(entity_j.position.x),
-                                collision_box_j.position.y + entity_j.position.y - one(entity_j.position.y),
-                            ),
-                            collision_box_j.x_width,
-                            collision_box_j.y_width,
-                        )
+                        absolute_collision_box_j = get_absolute_collision_box(collision_box_j, entity_j.position)
                         velocity_j = entity_j.velocity
 
                         if !((body_type_i == STATIC) && (body_type_j == STATIC))
