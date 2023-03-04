@@ -176,7 +176,7 @@ function start()
         true,
         Point(1, 1),
         Point(typemax(Int), typemax(Int)),
-        null(CollisionBox),
+        AABB(Point(0, 0), -1, -1),
         load_texture(texture_atlas, "assets/background.png"),
         null(AnimationState),
     ))
@@ -185,7 +185,7 @@ function start()
         true,
         Point(540, 960),
         Point(typemax(Int), typemax(Int)),
-        CollisionBox(SD.Rectangle(SD.Point(1, 1), 32 * 4, 24 * 4)),
+        AABB(Point(1, 1), 32 * 4, 24 * 4),
         load_texture(texture_atlas, "assets/burning_loop_1.png", length_scale = 4),
         AnimationState(1, 8, 100_000_000, 1),
     ))
@@ -194,7 +194,7 @@ function start()
         true,
         Point(975, 1),
         Point(typemax(Int), typemax(Int)),
-        CollisionBox(SD.Rectangle(SD.Point(1, 1), 106, 1920)),
+        AABB(Point(1, 1), 106, 1920),
         null(TextureIndex),
         null(AnimationState),
     ))
