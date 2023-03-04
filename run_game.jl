@@ -260,7 +260,7 @@ function start()
         elseif !key_up_ended_down && key_down_ended_down
             entities[2] = (Accessors.@set player.inv_velocity.x = 1_000_000)
         else
-            entities[2] = (Accessors.@set player.inv_velocity.x = typemax(Int))
+            entities[2] = (Accessors.@set player.inv_velocity.x = NULL_INV_VELOCITY.x)
         end
 
         player = entities[2]
@@ -272,7 +272,7 @@ function start()
         elseif !key_left_ended_down && key_right_ended_down
             entities[2] = (Accessors.@set player.inv_velocity.y = 1_000_000)
         else
-            entities[2] = (Accessors.@set player.inv_velocity.y = typemax(Int))
+            entities[2] = (Accessors.@set player.inv_velocity.y = NULL_INV_VELOCITY.y)
         end
 
         layout.reference_bounding_box = SD.Rectangle(SD.Point(1, 1), image_height, image_width)
