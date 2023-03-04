@@ -1,10 +1,10 @@
-struct Point
+struct Vec
     x::Int
     y::Int
 end
 
 struct AABB
-    position::Point
+    position::Vec
     x_width::Int
     y_width::Int
 end
@@ -22,7 +22,7 @@ end
     # SLIDING
 # end
 
-get_relative_aabb(aabb1::AABB, aabb2::AABB) = AABB(Point(aabb2.position.x - aabb1.x_width, aabb2.position.y - aabb1.y_width), aabb2.x_width + aabb1.x_width, aabb2.y_width + aabb1.y_width) # shrink aabb1 to a point and expand aabb2 to get new aabb21
+get_relative_aabb(aabb1::AABB, aabb2::AABB) = AABB(Vec(aabb2.position.x - aabb1.x_width, aabb2.position.y - aabb1.y_width), aabb2.x_width + aabb1.x_width, aabb2.y_width + aabb1.y_width) # shrink aabb1 to a point and expand aabb2 to get new aabb21
 
 @enum AABBIntersectionType begin
     NO_INTERSECTION = 1
@@ -31,11 +31,11 @@ get_relative_aabb(aabb1::AABB, aabb2::AABB) = AABB(Point(aabb2.position.x - aabb
     REGION_INTERSECTION
 end
 
-get_x_min(point::Point) = point.x
-get_x_max(point::Point) = point.x
+get_x_min(point::Vec) = point.x
+get_x_max(point::Vec) = point.x
 
-get_y_min(point::Point) = point.y
-get_y_max(point::Point) = point.y
+get_y_min(point::Vec) = point.y
+get_y_max(point::Vec) = point.y
 
 get_x_min(aabb::AABB) = aabb.position.x
 get_x_max(aabb::AABB) = aabb.position.x + aabb.x_width
@@ -50,7 +50,7 @@ is_valid(aabb::AABB) = (aabb.x_width >= zero(aabb.x_width)) || (aabb.y_width >= 
 
 is_reducible(aabb::AABB) = iszero(aabb.x_width) || iszero(aabb.y_width)
 
-function get_intersection_type(point::Point, aabb::AABB)
+function get_intersection_type(point::Vec, aabb::AABB)
     @assert is_valid(aabb)
     @assert !is_reducible(aabb)
 
@@ -86,7 +86,7 @@ function get_intersection_type(aabb1::AABB, aabb2::AABB)
 end
 
 # each movable body will move one at a time. And after each body tries to move, it will check for collisions with everything else and resolve them.
-function simulate(point::Point, aabb::AABB, dx, dy)
+function simulate(point::Vec, aabb::AABB, dx, dy)
     @assert is_valid(aabb)
     @assert !is_reducible(aabb)
 

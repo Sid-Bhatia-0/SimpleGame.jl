@@ -84,6 +84,7 @@ const DEBUG_INFO = DebugInfo()
 
 include("opengl_utils.jl")
 include("colors.jl")
+include("collision_detection.jl")
 include("textures.jl")
 include("entity_component_system.jl")
 include("utils.jl")
@@ -173,27 +174,27 @@ function start()
 
     add_entity!(entities, Entity(
         true,
-        Position(1, 1),
-        null(InvVelocity),
-        null(CollisionBox),
+        Vec(1, 1),
+        NULL_INV_VELOCITY,
+        NULL_COLLISION_BOX,
         load_texture(texture_atlas, "assets/background.png"),
         null(AnimationState),
     ))
 
     add_entity!(entities, Entity(
         true,
-        Position(540, 960),
-        InvVelocity(0, 0),
-        CollisionBox(SD.Rectangle(SD.Point(1, 1), 32 * 4, 24 * 4)),
+        Vec(540, 960),
+        NULL_INV_VELOCITY,
+        AABB(Vec(1, 1), 32 * 4, 24 * 4),
         load_texture(texture_atlas, "assets/burning_loop_1.png", length_scale = 4),
         AnimationState(1, 8, 100_000_000, 1),
     ))
 
     add_entity!(entities, Entity(
         true,
-        Position(975, 1),
-        null(InvVelocity),
-        CollisionBox(SD.Rectangle(SD.Point(1, 1), 106, 1920)),
+        Vec(975, 1),
+        NULL_INV_VELOCITY,
+        AABB(Vec(1, 1), 106, 1920),
         null(TextureIndex),
         null(AnimationState),
     ))

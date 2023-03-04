@@ -12,32 +12,32 @@ function start()
     num_steps = 1
     aabbs = Vector{AABB}(undef, num_aabbs)
     body_types = Vector{BodyType}(undef, num_aabbs)
-    velocities = Vector{Point}(undef, num_aabbs)
+    velocities = Vector{Vec}(undef, num_aabbs)
     collisions = Vector{Tuple{Int, Int, Int, Rational{Int}}}()
 
-    aabbs[1] = AABB(Point(1, 1), 64, 8)
+    aabbs[1] = AABB(Vec(1, 1), 64, 8)
     body_types[1] = STATIC
-    velocities[1] = Point(0, 0)
+    velocities[1] = Vec(0, 0)
 
-    aabbs[2] = AABB(Point(1, 64 - 8 + 1), 64, 8)
+    aabbs[2] = AABB(Vec(1, 64 - 8 + 1), 64, 8)
     body_types[2] = STATIC
-    velocities[2] = Point(0, 0)
+    velocities[2] = Vec(0, 0)
 
-    aabbs[3] = AABB(Point(1, 8 + 1), 8, 64 - 2 * 8)
+    aabbs[3] = AABB(Vec(1, 8 + 1), 8, 64 - 2 * 8)
     body_types[3] = STATIC
-    velocities[3] = Point(0, 0)
+    velocities[3] = Vec(0, 0)
 
-    aabbs[4] = AABB(Point(64 - 8 + 1, 8 + 1), 8, 64 - 2 * 8)
+    aabbs[4] = AABB(Vec(64 - 8 + 1, 8 + 1), 8, 64 - 2 * 8)
     body_types[4] = STATIC
-    velocities[4] = Point(0, 0)
+    velocities[4] = Vec(0, 0)
 
-    aabbs[5] = AABB(Point(29, 29), 8, 8)
+    aabbs[5] = AABB(Vec(29, 29), 8, 8)
     body_types[5] = STATIC
-    velocities[5] = Point(0, 0)
+    velocities[5] = Vec(0, 0)
 
-    aabbs[6] = AABB(Point(13, 13), 8, 8)
+    aabbs[6] = AABB(Vec(13, 13), 8, 8)
     body_types[6] = DYNAMIC
-    velocities[6] = Point(2, 1)
+    velocities[6] = Vec(2, 1)
 
     @show aabbs
     println()
@@ -70,7 +70,7 @@ function start()
                 velocity_j = velocities[j]
 
                 if !((body_type_i == STATIC) && (body_type_j == STATIC))
-                    velocity_ij = Point(velocity_i.x - velocity_j.x, velocity_i.y - velocity_j.y)
+                    velocity_ij = Vec(velocity_i.x - velocity_j.x, velocity_i.y - velocity_j.y)
                     aabb_j_expanded = get_relative_aabb(aabb_i, aabb_j)
 
                     hit_dimension, relative_hit_time = simulate(aabb_i.position, aabb_j_expanded, velocity_ij.x * dt, velocity_ij.y * dt)
@@ -100,7 +100,7 @@ function start()
         @show first_collision
         if first_collision == null_collision
             for k in 1:length(aabbs)
-                aabbs[k] = AABB(Point(aabbs[k].position.x + velocities[k].x * dt, aabbs[k].position.y + velocities[k].y * dt), aabbs[k].x_width, aabbs[k].y_width) 
+                aabbs[k] = AABB(Vec(aabbs[k].position.x + velocities[k].x * dt, aabbs[k].position.y + velocities[k].y * dt), aabbs[k].x_width, aabbs[k].y_width)
             end
 
             dt = zero(dt)
@@ -108,7 +108,7 @@ function start()
             i, j, hit_dimension, relative_hit_time, hit_time = first_collision
 
             for k in 1:length(aabbs)
-                aabbs[k] = AABB(Point(aabbs[k].position.x + velocities[k].x * hit_time, aabbs[k].position.y + velocities[k].y * hit_time), aabbs[k].x_width, aabbs[k].y_width) 
+                aabbs[k] = AABB(Vec(aabbs[k].position.x + velocities[k].x * hit_time, aabbs[k].position.y + velocities[k].y * hit_time), aabbs[k].x_width, aabbs[k].y_width)
             end
 
             body_type_i = body_types[i]
@@ -121,15 +121,15 @@ function start()
 
             if (body_type_i == STATIC) && (body_type_j == DYNAMIC)
                 if hit_dimension == 1
-                    velocities[j] = Point(-velocities[j].x, velocities[j].y)
+                    velocities[j] = Vec(-velocities[j].x, velocities[j].y)
                 else
-                    velocities[j] = Point(velocities[j].x, -velocities[j].y)
+                    velocities[j] = Vec(velocities[j].x, -velocities[j].y)
                 end
             elseif (body_type_i == DYNAMIC) && (body_type_j == STATIC)
                 if hit_dimension == 1
-                    velocities[i] = Point(-velocities[i].x, velocities[i].y)
+                    velocities[i] = Vec(-velocities[i].x, velocities[i].y)
                 else
-                    velocities[i] = Point(velocities[i].x, -velocities[i].y)
+                    velocities[i] = Vec(velocities[i].x, -velocities[i].y)
                 end
             elseif (body_type_i == DYNAMIC) && (body_type_j == DYNAMIC)
                 error("Not implemented")
