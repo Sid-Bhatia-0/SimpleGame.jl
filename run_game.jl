@@ -172,29 +172,68 @@ function start()
     # entities
     entities = Entity[]
 
+    # background
     add_entity!(entities, Entity(
         true,
         Vec(1, 1),
         NULL_INV_VELOCITY,
         NULL_COLLISION_BOX,
+        STATIC,
         load_texture(texture_atlas, "assets/background.png"),
         null(AnimationState),
     ))
 
+    # player
     add_entity!(entities, Entity(
         true,
         Vec(540, 960),
         NULL_INV_VELOCITY,
         AABB(Vec(1, 1), 32 * 4, 24 * 4),
+        DYNAMIC,
         load_texture(texture_atlas, "assets/burning_loop_1.png", length_scale = 4),
         AnimationState(1, 8, 100_000_000, 1),
     ))
 
+    # floor
     add_entity!(entities, Entity(
         true,
         Vec(975, 1),
         NULL_INV_VELOCITY,
         AABB(Vec(1, 1), 106, 1920),
+        STATIC,
+        null(TextureIndex),
+        null(AnimationState),
+    ))
+
+    # left boundary wall
+    add_entity!(entities, Entity(
+        true,
+        Vec(1 - 64, 1 - 64),
+        NULL_INV_VELOCITY,
+        AABB(Vec(1, 1), 1080 + 2 * 64, 64),
+        STATIC,
+        null(TextureIndex),
+        null(AnimationState),
+    ))
+
+    # right boundary wall
+    add_entity!(entities, Entity(
+        true,
+        Vec(1 - 64, 1920 + 1),
+        NULL_INV_VELOCITY,
+        AABB(Vec(1, 1), 1080 + 2 * 64, 64),
+        STATIC,
+        null(TextureIndex),
+        null(AnimationState),
+    ))
+
+    # top boundary wall
+    add_entity!(entities, Entity(
+        true,
+        Vec(1 - 64, 1),
+        NULL_INV_VELOCITY,
+        AABB(Vec(1, 1), 64, 1920),
+        STATIC,
         null(TextureIndex),
         null(AnimationState),
     ))
@@ -257,7 +296,7 @@ function start()
         elseif !key_up_ended_down && key_down_ended_down
             entities[2] = (Accessors.@set player.inv_velocity.x = 1_000_000)
         else
-            entities[2] = (Accessors.@set player.inv_velocity.x = typemax(Int))
+            entities[2] = (Accessors.@set player.inv_velocity.x = NULL_INV_VELOCITY.x)
         end
 
         player = entities[2]
@@ -269,7 +308,7 @@ function start()
         elseif !key_left_ended_down && key_right_ended_down
             entities[2] = (Accessors.@set player.inv_velocity.y = 1_000_000)
         else
-            entities[2] = (Accessors.@set player.inv_velocity.y = typemax(Int))
+            entities[2] = (Accessors.@set player.inv_velocity.y = NULL_INV_VELOCITY.y)
         end
 
         layout.reference_bounding_box = SD.Rectangle(SD.Point(1, 1), image_height, image_width)
