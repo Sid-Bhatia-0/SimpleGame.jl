@@ -5,8 +5,8 @@ end
 
 struct Entity
     is_alive::Bool
-    position::Point
-    inv_velocity::Point
+    position::Vec
+    inv_velocity::Vec
     collision_box::AABB
     texture_index::TextureIndex
     animation_state::AnimationState
@@ -18,11 +18,11 @@ is_drawable(entity) = entity.texture_index.start > zero(entity.texture_index.sta
 
 is_animatable(entity) = entity.animation_state.num_frames > one(entity.animation_state.num_frames)
 
-is_collidable(entity) = entity.collision_box != AABB(Point(0, 0), -1, -1)
+is_collidable(entity) = entity.collision_box != AABB(Vec(0, 0), -1, -1)
 
-is_movable(entity) = entity.inv_velocity != Point(typemax(Int), typemax(Int))
+is_movable(entity) = entity.inv_velocity != Vec(typemax(Int), typemax(Int))
 
-get_point(position::Point) = SD.Point(position.x, position.y)
+get_point(position::Vec) = SD.Point(position.x, position.y)
 get_rectangle(aabb::AABB) = SD.Rectangle(SD.Point(aabb.position.x, aabb.position.y), aabb.x_width, aabb.y_width)
 
 function add_entity!(entities, entity)
@@ -39,10 +39,10 @@ end
 
 move(position, inv_velocity, dt) = position + dt ÷ inv_velocity
 
-function move(position::Point, inv_velocity::Point, dt)
+function move(position::Vec, inv_velocity::Vec, dt)
     i = move(position.x, inv_velocity.x, dt)
     j = move(position.y, inv_velocity.y, dt)
-    return Point(i, j)
+    return Vec(i, j)
 end
 
 function update!(entities, dt)
