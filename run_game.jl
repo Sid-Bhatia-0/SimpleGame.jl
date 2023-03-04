@@ -172,6 +172,7 @@ function start()
     # entities
     entities = Entity[]
 
+    # background
     add_entity!(entities, Entity(
         true,
         Vec(1, 1),
@@ -182,6 +183,7 @@ function start()
         null(AnimationState),
     ))
 
+    # player
     add_entity!(entities, Entity(
         true,
         Vec(540, 960),
@@ -192,11 +194,45 @@ function start()
         AnimationState(1, 8, 100_000_000, 1),
     ))
 
+    # floor
     add_entity!(entities, Entity(
         true,
         Vec(975, 1),
         NULL_INV_VELOCITY,
         AABB(Vec(1, 1), 106, 1920),
+        STATIC,
+        null(TextureIndex),
+        null(AnimationState),
+    ))
+
+    # left boundary wall
+    add_entity!(entities, Entity(
+        true,
+        Vec(1 - 64, 1 - 64),
+        NULL_INV_VELOCITY,
+        AABB(Vec(1, 1), 1080 + 2 * 64, 64),
+        STATIC,
+        null(TextureIndex),
+        null(AnimationState),
+    ))
+
+    # right boundary wall
+    add_entity!(entities, Entity(
+        true,
+        Vec(1 - 64, 1920 + 1),
+        NULL_INV_VELOCITY,
+        AABB(Vec(1, 1), 1080 + 2 * 64, 64),
+        STATIC,
+        null(TextureIndex),
+        null(AnimationState),
+    ))
+
+    # top boundary wall
+    add_entity!(entities, Entity(
+        true,
+        Vec(1 - 64, 1),
+        NULL_INV_VELOCITY,
+        AABB(Vec(1, 1), 64, 1920),
         STATIC,
         null(TextureIndex),
         null(AnimationState),
