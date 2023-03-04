@@ -8,6 +8,7 @@ struct Entity
     position::Vec
     inv_velocity::Vec
     collision_box::AABB
+    body_type::BodyType
     texture_index::TextureIndex
     animation_state::AnimationState
 end
@@ -70,6 +71,7 @@ function update!(entities, dt)
                 new_position,
                 entity.inv_velocity,
                 entity.collision_box,
+                entity.body_type,
                 entity.texture_index,
                 new_animation_state,
             )

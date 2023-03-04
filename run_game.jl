@@ -177,6 +177,7 @@ function start()
         Vec(1, 1),
         NULL_INV_VELOCITY,
         NULL_COLLISION_BOX,
+        STATIC,
         load_texture(texture_atlas, "assets/background.png"),
         null(AnimationState),
     ))
@@ -186,6 +187,7 @@ function start()
         Vec(540, 960),
         NULL_INV_VELOCITY,
         AABB(Vec(1, 1), 32 * 4, 24 * 4),
+        DYNAMIC,
         load_texture(texture_atlas, "assets/burning_loop_1.png", length_scale = 4),
         AnimationState(1, 8, 100_000_000, 1),
     ))
@@ -195,6 +197,7 @@ function start()
         Vec(975, 1),
         NULL_INV_VELOCITY,
         AABB(Vec(1, 1), 106, 1920),
+        STATIC,
         null(TextureIndex),
         null(AnimationState),
     ))
