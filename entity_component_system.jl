@@ -22,8 +22,9 @@ is_collidable(entity) = entity.collision_box != AABB(Vec(0, 0), -1, -1)
 
 is_movable(entity) = entity.inv_velocity != Vec(typemax(Int), typemax(Int))
 
-get_point(position::Vec) = SD.Point(position.x, position.y)
-get_rectangle(aabb::AABB) = SD.Rectangle(SD.Point(aabb.position.x, aabb.position.y), aabb.x_width, aabb.y_width)
+SD.Point(vec::Vec) = SD.Point(vec.x, vec.y)
+
+SD.Rectangle(aabb::AABB) = SD.Rectangle(SD.Point(aabb.position), aabb.x_width, aabb.y_width)
 
 function add_entity!(entities, entity)
     for (i, entity_i) in enumerate(entities)
@@ -77,17 +78,17 @@ function drawing_system!(draw_list, entities, texture_atlas)
         if is_alive(entity)
             if is_drawable(entity)
                 if is_animatable(entity)
-                    push!(draw_list, SD.Image(get_point(entity.position), get_texture(texture_atlas, entity.texture_index, entity.animation_state)))
+                    push!(draw_list, SD.Image(SD.Point(entity.position), get_texture(texture_atlas, entity.texture_index, entity.animation_state)))
                 else
-                    push!(draw_list, SD.Image(get_point(entity.position), get_texture(texture_atlas, entity.texture_index)))
+                    push!(draw_list, SD.Image(SD.Point(entity.position), get_texture(texture_atlas, entity.texture_index)))
                 end
 
             end
 
             if DEBUG_INFO.show_collision_boxes
                 if is_collidable(entity)
-                    point = get_point(entity.position)
-                    rectangle = get_rectangle(entity.collision_box)
+                    point = SD.Point(entity.position)
+                    rectangle = SD.Rectangle(entity.collision_box)
                     push!(draw_list, ShapeDrawable(SD.move(rectangle, point.i - 1, point.j -1), COLORS[Integer(SI.COLOR_INDEX_TEXT)]))
                 end
             end
