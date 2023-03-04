@@ -89,6 +89,14 @@ include("textures.jl")
 include("entity_component_system.jl")
 include("utils.jl")
 
+const PIXEL_LENGTH = 65536
+
+get_block_start(i_block, block_length) = (i_block - one(i_block)) * block_length + one(block_length)
+get_block_end(i_block, block_length) = i_block * block_length + one(block_length)
+get_block(x, block_length) = fld1(x, block_length)
+
+get_block(vec::Vec, block_length) = Vec(get_block(vec.x, block_length), get_block(vec.y, block_length))
+
 function start()
     primary_monitor = GLFW.GetPrimaryMonitor()
     video_mode = GLFW.GetVideoMode(primary_monitor)
@@ -175,8 +183,8 @@ function start()
     # background
     add_entity!(entities, Entity(
         true,
-        Vec(1, 1),
-        NULL_INV_VELOCITY,
+        Vec(get_block_start(1, PIXEL_LENGTH), get_block_start(1, PIXEL_LENGTH)),
+        NULL_VELOCITY,
         NULL_COLLISION_BOX,
         STATIC,
         load_texture(texture_atlas, "assets/background.png"),
@@ -186,9 +194,9 @@ function start()
     # player
     add_entity!(entities, Entity(
         true,
-        Vec(540, 960),
-        NULL_INV_VELOCITY,
-        AABB(Vec(1, 1), 32 * 4, 24 * 4),
+        Vec(get_block_start(540, PIXEL_LENGTH), get_block_start(960, PIXEL_LENGTH)),
+        NULL_VELOCITY,
+        AABB(Vec(get_block_start(1, PIXEL_LENGTH), get_block_start(1, PIXEL_LENGTH)), 32 * 4 * PIXEL_LENGTH, 24 * 4 * PIXEL_LENGTH),
         DYNAMIC,
         load_texture(texture_atlas, "assets/burning_loop_1.png", length_scale = 4),
         AnimationState(1, 8, 100_000, 1),
@@ -197,9 +205,9 @@ function start()
     # floor
     add_entity!(entities, Entity(
         true,
-        Vec(975, 1),
-        NULL_INV_VELOCITY,
-        AABB(Vec(1, 1), 106, 1920),
+        Vec(get_block_start(975, PIXEL_LENGTH), get_block_start(1, PIXEL_LENGTH)),
+        NULL_VELOCITY,
+        AABB(Vec(get_block_start(1, PIXEL_LENGTH), get_block_start(1, PIXEL_LENGTH)), 106 * PIXEL_LENGTH, 1920 * PIXEL_LENGTH),
         STATIC,
         null(TextureIndex),
         null(AnimationState),
@@ -208,9 +216,9 @@ function start()
     # left boundary wall
     add_entity!(entities, Entity(
         true,
-        Vec(1 - 64, 1 - 64),
-        NULL_INV_VELOCITY,
-        AABB(Vec(1, 1), 1080 + 2 * 64, 64),
+        Vec(get_block_start(1 - 64, PIXEL_LENGTH), get_block_start(1 - 64, PIXEL_LENGTH)),
+        NULL_VELOCITY,
+        AABB(Vec(get_block_start(1, PIXEL_LENGTH), get_block_start(1, PIXEL_LENGTH)), (1080 + 2 * 64) * PIXEL_LENGTH, 64 * PIXEL_LENGTH),
         STATIC,
         null(TextureIndex),
         null(AnimationState),
@@ -219,9 +227,9 @@ function start()
     # right boundary wall
     add_entity!(entities, Entity(
         true,
-        Vec(1 - 64, 1920 + 1),
-        NULL_INV_VELOCITY,
-        AABB(Vec(1, 1), 1080 + 2 * 64, 64),
+        Vec(get_block_start(1 - 64, PIXEL_LENGTH), get_block_start(1920 + 1, PIXEL_LENGTH)),
+        NULL_VELOCITY,
+        AABB(Vec(get_block_start(1, PIXEL_LENGTH), get_block_start(1, PIXEL_LENGTH)), (1080 + 2 * 64) * PIXEL_LENGTH, 64 * PIXEL_LENGTH),
         STATIC,
         null(TextureIndex),
         null(AnimationState),
@@ -230,9 +238,9 @@ function start()
     # top boundary wall
     add_entity!(entities, Entity(
         true,
-        Vec(1 - 64, 1),
-        NULL_INV_VELOCITY,
-        AABB(Vec(1, 1), 64, 1920),
+        Vec(get_block_start(1 - 64, PIXEL_LENGTH), get_block_start(1, PIXEL_LENGTH)),
+        NULL_VELOCITY,
+        AABB(Vec(get_block_start(1, PIXEL_LENGTH), get_block_start(1, PIXEL_LENGTH)), 64 * PIXEL_LENGTH, 1920 * PIXEL_LENGTH),
         STATIC,
         null(TextureIndex),
         null(AnimationState),
@@ -296,9 +304,9 @@ function start()
         key_down_went_down = SI.went_down(user_input_state.keyboard_buttons[Int(GLFW.KEY_DOWN) + 1])
 
         if key_up_went_down && !key_down_went_down
-            entities[2] = (Accessors.@set player.inv_velocity.x = -1_000)
+            entities[2] = (Accessors.@set player.velocity.x = -1000)
         elseif !key_up_went_down && key_down_went_down
-            entities[2] = (Accessors.@set player.inv_velocity.x = 1_000)
+            entities[2] = (Accessors.@set player.velocity.x = 1000)
         end
 
         player = entities[2]
@@ -306,11 +314,11 @@ function start()
         key_right_ended_down = user_input_state.keyboard_buttons[Int(GLFW.KEY_RIGHT) + 1].ended_down
 
         if key_left_ended_down && !key_right_ended_down
-            entities[2] = (Accessors.@set player.inv_velocity.y = -1_000)
+            entities[2] = (Accessors.@set player.velocity.y = -1000)
         elseif !key_left_ended_down && key_right_ended_down
-            entities[2] = (Accessors.@set player.inv_velocity.y = 1_000)
+            entities[2] = (Accessors.@set player.velocity.y = 1000)
         else
-            entities[2] = (Accessors.@set player.inv_velocity.y = NULL_INV_VELOCITY.y)
+            entities[2] = (Accessors.@set player.velocity.y = NULL_VELOCITY.y)
         end
 
         layout.reference_bounding_box = SD.Rectangle(SD.Point(1, 1), image_height, image_width)

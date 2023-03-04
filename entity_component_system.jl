@@ -6,7 +6,7 @@ end
 struct Entity
     is_alive::Bool
     position::Vec
-    inv_velocity::Vec
+    velocity::Vec
     collision_box::AABB
     body_type::BodyType
     texture_index::TextureIndex
@@ -14,7 +14,7 @@ struct Entity
 end
 
 const NULL_POSITION = Vec(typemin(Int), typemin(Int))
-const NULL_INV_VELOCITY = Vec(typemin(Int), typemin(Int))
+const NULL_VELOCITY = Vec(0, 0)
 const NULL_COLLISION_BOX = AABB(Vec(typemin(Int), typemin(Int)), typemin(Int), typemin(Int))
 
 is_alive(entity) = entity.is_alive
@@ -25,7 +25,7 @@ is_animatable(entity) = entity.animation_state.num_frames > one(entity.animation
 
 is_collidable(entity) = entity.collision_box != NULL_COLLISION_BOX
 
-is_movable(entity) = entity.inv_velocity != NULL_INV_VELOCITY
+is_movable(entity) = entity.velocity != NULL_VELOCITY
 
 SD.Point(vec::Vec) = SD.Point(vec.x, vec.y)
 
@@ -43,12 +43,12 @@ function add_entity!(entities, entity)
     return length(entities)
 end
 
-move(position, inv_velocity, dt) = position + dt ÷ inv_velocity
+move(position, velocity, dt) = position + velocity * dt
 
-function move(position::Vec, inv_velocity::Vec, dt)
-    i = move(position.x, inv_velocity.x, dt)
-    j = move(position.y, inv_velocity.y, dt)
-    return Vec(i, j)
+function move(position::Vec, velocity::Vec, dt)
+    x = move(position.x, velocity.x, dt)
+    y = move(position.y, velocity.y, dt)
+    return Vec(x, y)
 end
 
 function update!(entities, dt)
@@ -71,7 +71,7 @@ function update!(entities, dt)
                     collision_box_i.x_width,
                     collision_box_i.y_width,
                 )
-                inv_velocity_i = entity_i.inv_velocity
+                velocity_i = entity_i.velocity
 
                 for j in i + 1 : length(entities)
                     entity_j = entities[j]
@@ -87,11 +87,11 @@ function update!(entities, dt)
                             collision_box_j.x_width,
                             collision_box_j.y_width,
                         )
-                        inv_velocity_j = entity_j.inv_velocity
+                        velocity_j = entity_j.velocity
 
                         if !((body_type_i == STATIC) && (body_type_j == STATIC))
-                            dx_ij = dt ÷ inv_velocity_i.x - dt ÷ inv_velocity_j.x
-                            dy_ij = dt ÷ inv_velocity_i.y - dt ÷ inv_velocity_j.y
+                            dx_ij = (velocity_i.x - velocity_j.x) * dt
+                            dy_ij = (velocity_i.y - velocity_j.y) * dt
 
                             absolute_collision_box_j_expanded = get_relative_aabb(absolute_collision_box_i, absolute_collision_box_j)
 
@@ -102,11 +102,11 @@ function update!(entities, dt)
 
                                 push!(DEBUG_INFO.messages, "body_type_i: $(body_type_i)")
                                 push!(DEBUG_INFO.messages, "absolute_collision_box_i: $(absolute_collision_box_i)")
-                                push!(DEBUG_INFO.messages, "inv_velocity_i: $(inv_velocity_i)")
+                                push!(DEBUG_INFO.messages, "velocity_i: $(velocity_i)")
 
                                 push!(DEBUG_INFO.messages, "body_type_j: $(body_type_j)")
                                 push!(DEBUG_INFO.messages, "absolute_collision_box_j: $(absolute_collision_box_j)")
-                                push!(DEBUG_INFO.messages, "inv_velocity_j: $(inv_velocity_j)")
+                                push!(DEBUG_INFO.messages, "velocity_j: $(velocity_j)")
 
                                 hit_time = (relative_hit_time.num * dt) ÷ relative_hit_time.den
                                 push!(DEBUG_INFO.messages, "i, j, hit_dimension, relative_hit_time, hit_time: $(i), $(j), $(hit_dimension), $(relative_hit_time), $(hit_time)")
@@ -134,33 +134,33 @@ function update!(entities, dt)
             entity_j = entities[j]
 
             body_type_i = entity_i.body_type
-            inv_velocity_i = entity_i.inv_velocity
+            velocity_i = entity_i.velocity
 
             body_type_j = entity_j.body_type
-            inv_velocity_j = entity_j.inv_velocity
+            velocity_j = entity_j.velocity
 
             if (entity_i.body_type == STATIC) && (entity_j.body_type == DYNAMIC)
-                new_inv_velocity_i = inv_velocity_i
+                new_velocity_i = velocity_i
 
                 if hit_dimension == 1
-                    new_inv_velocity_j = Vec(inv_velocity_i.x, inv_velocity_j.y)
+                    new_velocity_j = Vec(velocity_i.x, velocity_j.y)
                 else
-                    new_inv_velocity_j = Vec(inv_velocity_j.x, inv_velocity_i.y)
+                    new_velocity_j = Vec(velocity_j.x, velocity_i.y)
                 end
             elseif (body_type_i == DYNAMIC) && (body_type_j == STATIC)
-                new_inv_velocity_j = inv_velocity_j
+                new_velocity_j = velocity_j
 
                 if hit_dimension == 1
-                    new_inv_velocity_i = Vec(inv_velocity_j.x, inv_velocity_i.y)
+                    new_velocity_i = Vec(velocity_j.x, velocity_i.y)
                 else
-                    new_inv_velocity_i = Vec(inv_velocity_i.x, inv_velocity_j.y)
+                    new_velocity_i = Vec(velocity_i.x, velocity_j.y)
                 end
             elseif (body_type_i == DYNAMIC) && (body_type_j == DYNAMIC)
                 error("Not implemented")
             end
 
-            entities[i] = (Accessors.@set entity_i.inv_velocity = new_inv_velocity_i)
-            entities[j] = (Accessors.@set entity_j.inv_velocity = new_inv_velocity_j)
+            entities[i] = (Accessors.@set entity_i.velocity = new_velocity_i)
+            entities[j] = (Accessors.@set entity_j.velocity = new_velocity_j)
 
             dt = dt - hit_time
         end
@@ -175,10 +175,10 @@ function integrate!(entities, dt)
 
         if is_movable(entity)
             position = entity.position
-            inv_velocity = entity.inv_velocity
+            velocity = entity.velocity
 
-            dx = dt ÷ inv_velocity.x
-            dy = dt ÷ inv_velocity.y
+            dx = velocity.x * dt
+            dy = velocity.y * dt
 
             new_position = Vec(position.x + dx, position.y + dy)
         else
@@ -194,7 +194,7 @@ function integrate!(entities, dt)
         entities[i] = typeof(entity)(
             entity.is_alive,
             new_position,
-            entity.inv_velocity,
+            entity.velocity,
             entity.collision_box,
             entity.body_type,
             entity.texture_index,
@@ -210,17 +210,17 @@ function drawing_system!(draw_list, entities, texture_atlas)
         if is_alive(entity)
             if is_drawable(entity)
                 if is_animatable(entity)
-                    push!(draw_list, SD.Image(SD.Point(entity.position), get_texture(texture_atlas, entity.texture_index, entity.animation_state)))
+                    push!(draw_list, SD.Image(SD.Point(get_block(entity.position, PIXEL_LENGTH)), get_texture(texture_atlas, entity.texture_index, entity.animation_state)))
                 else
-                    push!(draw_list, SD.Image(SD.Point(entity.position), get_texture(texture_atlas, entity.texture_index)))
+                    push!(draw_list, SD.Image(SD.Point(get_block(entity.position, PIXEL_LENGTH)), get_texture(texture_atlas, entity.texture_index)))
                 end
 
             end
 
             if DEBUG_INFO.show_collision_boxes
                 if is_collidable(entity)
-                    point = SD.Point(entity.position)
-                    rectangle = SD.Rectangle(entity.collision_box)
+                    point = SD.Point(get_block(entity.position, PIXEL_LENGTH))
+                    rectangle = SD.Rectangle(SD.Point(get_block(entity.collision_box.position, PIXEL_LENGTH)), get_block(entity.collision_box.x_width, PIXEL_LENGTH), get_block(entity.collision_box.y_width, PIXEL_LENGTH))
                     push!(draw_list, ShapeDrawable(SD.move(rectangle, point.i - 1, point.j -1), COLORS[Integer(SI.COLOR_INDEX_TEXT)]))
                 end
             end
