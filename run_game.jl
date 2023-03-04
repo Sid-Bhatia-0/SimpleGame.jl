@@ -291,12 +291,13 @@ function start()
         key_up_ended_down = user_input_state.keyboard_buttons[Int(GLFW.KEY_UP) + 1].ended_down
         key_down_ended_down = user_input_state.keyboard_buttons[Int(GLFW.KEY_DOWN) + 1].ended_down
 
-        if key_up_ended_down && !key_down_ended_down
+        key_up_went_down = SI.went_down(user_input_state.keyboard_buttons[Int(GLFW.KEY_UP) + 1])
+        key_down_went_down = SI.went_down(user_input_state.keyboard_buttons[Int(GLFW.KEY_DOWN) + 1])
+
+        if key_up_went_down && !key_down_went_down
             entities[2] = (Accessors.@set player.inv_velocity.x = -1_000_000)
-        elseif !key_up_ended_down && key_down_ended_down
+        elseif !key_up_went_down && key_down_went_down
             entities[2] = (Accessors.@set player.inv_velocity.x = 1_000_000)
-        else
-            entities[2] = (Accessors.@set player.inv_velocity.x = NULL_INV_VELOCITY.x)
         end
 
         player = entities[2]
