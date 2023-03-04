@@ -191,7 +191,7 @@ function start()
         AABB(Vec(1, 1), 32 * 4, 24 * 4),
         DYNAMIC,
         load_texture(texture_atlas, "assets/burning_loop_1.png", length_scale = 4),
-        AnimationState(1, 8, 100_000_000, 1),
+        AnimationState(1, 8, 100_000, 1),
     ))
 
     # floor
@@ -246,6 +246,7 @@ function start()
 
     max_frames_per_second = 60
     min_ns_per_frame = 1_000_000_000 ÷ max_frames_per_second
+    min_μs_per_frame = 1_000_000 ÷ max_frames_per_second
 
     reference_time = time_ns()
     previous_frame_start_time = 0
@@ -295,9 +296,9 @@ function start()
         key_down_went_down = SI.went_down(user_input_state.keyboard_buttons[Int(GLFW.KEY_DOWN) + 1])
 
         if key_up_went_down && !key_down_went_down
-            entities[2] = (Accessors.@set player.inv_velocity.x = -1_000_000)
+            entities[2] = (Accessors.@set player.inv_velocity.x = -1_000)
         elseif !key_up_went_down && key_down_went_down
-            entities[2] = (Accessors.@set player.inv_velocity.x = 1_000_000)
+            entities[2] = (Accessors.@set player.inv_velocity.x = 1_000)
         end
 
         player = entities[2]
@@ -305,9 +306,9 @@ function start()
         key_right_ended_down = user_input_state.keyboard_buttons[Int(GLFW.KEY_RIGHT) + 1].ended_down
 
         if key_left_ended_down && !key_right_ended_down
-            entities[2] = (Accessors.@set player.inv_velocity.y = -1_000_000)
+            entities[2] = (Accessors.@set player.inv_velocity.y = -1_000)
         elseif !key_left_ended_down && key_right_ended_down
-            entities[2] = (Accessors.@set player.inv_velocity.y = 1_000_000)
+            entities[2] = (Accessors.@set player.inv_velocity.y = 1_000)
         else
             entities[2] = (Accessors.@set player.inv_velocity.y = NULL_INV_VELOCITY.y)
         end
@@ -338,25 +339,25 @@ function start()
 
             push!(DEBUG_INFO.messages, "previous frame number: $(frame_number)")
 
-            push!(DEBUG_INFO.messages, "avg. total time per frame: $(round((last(DEBUG_INFO.frame_start_time_buffer) - first(DEBUG_INFO.frame_start_time_buffer)) / (1e6 * length(DEBUG_INFO.frame_start_time_buffer) - 1), digits = 2)) ms")
+            push!(DEBUG_INFO.messages, "avg. total time per frame: $(round((last(DEBUG_INFO.frame_start_time_buffer) - first(DEBUG_INFO.frame_start_time_buffer)) / (1000 * length(DEBUG_INFO.frame_start_time_buffer) - 1), digits = 2)) ms")
 
-            push!(DEBUG_INFO.messages, "avg. event poll time per frame: $(round(sum(DEBUG_INFO.event_poll_time_buffer) / (1e6 * length(DEBUG_INFO.event_poll_time_buffer)), digits = 2)) ms")
+            push!(DEBUG_INFO.messages, "avg. event poll time per frame: $(round(sum(DEBUG_INFO.event_poll_time_buffer) / (1000 * length(DEBUG_INFO.event_poll_time_buffer)), digits = 2)) ms")
 
-            push!(DEBUG_INFO.messages, "avg. dt per frame: $(round(sum(DEBUG_INFO.dt_buffer) / (1e6 * length(DEBUG_INFO.dt_buffer)), digits = 2)) ms")
+            push!(DEBUG_INFO.messages, "avg. dt per frame: $(round(sum(DEBUG_INFO.dt_buffer) / (1000 * length(DEBUG_INFO.dt_buffer)), digits = 2)) ms")
 
-            push!(DEBUG_INFO.messages, "avg. update time per frame: $(round(sum(DEBUG_INFO.update_time_buffer) / (1e6 * length(DEBUG_INFO.update_time_buffer)), digits = 2)) ms")
+            push!(DEBUG_INFO.messages, "avg. update time per frame: $(round(sum(DEBUG_INFO.update_time_buffer) / (1000 * length(DEBUG_INFO.update_time_buffer)), digits = 2)) ms")
 
-            push!(DEBUG_INFO.messages, "avg. drawing system time per frame: $(round(sum(DEBUG_INFO.drawing_system_time_buffer) / (1e6 * length(DEBUG_INFO.drawing_system_time_buffer)), digits = 2)) ms")
+            push!(DEBUG_INFO.messages, "avg. drawing system time per frame: $(round(sum(DEBUG_INFO.drawing_system_time_buffer) / (1000 * length(DEBUG_INFO.drawing_system_time_buffer)), digits = 2)) ms")
 
-            push!(DEBUG_INFO.messages, "avg. draw time per frame: $(round(sum(DEBUG_INFO.draw_time_buffer) / (1e6 * length(DEBUG_INFO.draw_time_buffer)), digits = 2)) ms")
+            push!(DEBUG_INFO.messages, "avg. draw time per frame: $(round(sum(DEBUG_INFO.draw_time_buffer) / (1000 * length(DEBUG_INFO.draw_time_buffer)), digits = 2)) ms")
 
-            push!(DEBUG_INFO.messages, "avg. texture upload time per frame: $(round(sum(DEBUG_INFO.texture_upload_time_buffer) / (1e6 * length(DEBUG_INFO.texture_upload_time_buffer)), digits = 2)) ms")
+            push!(DEBUG_INFO.messages, "avg. texture upload time per frame: $(round(sum(DEBUG_INFO.texture_upload_time_buffer) / (1000 * length(DEBUG_INFO.texture_upload_time_buffer)), digits = 2)) ms")
 
-            push!(DEBUG_INFO.messages, "avg. sleep time theoretical: $(round(sum(DEBUG_INFO.sleep_time_theoretical_buffer) / (1e6 * length(DEBUG_INFO.sleep_time_theoretical_buffer)), digits = 2)) ms")
+            push!(DEBUG_INFO.messages, "avg. sleep time theoretical: $(round(sum(DEBUG_INFO.sleep_time_theoretical_buffer) / (1000 * length(DEBUG_INFO.sleep_time_theoretical_buffer)), digits = 2)) ms")
 
-            push!(DEBUG_INFO.messages, "avg. sleep time observed: $(round(sum(DEBUG_INFO.sleep_time_observed_buffer) / (1e6 * length(DEBUG_INFO.sleep_time_observed_buffer)), digits = 2)) ms")
+            push!(DEBUG_INFO.messages, "avg. sleep time observed: $(round(sum(DEBUG_INFO.sleep_time_observed_buffer) / (1000 * length(DEBUG_INFO.sleep_time_observed_buffer)), digits = 2)) ms")
 
-            push!(DEBUG_INFO.messages, "avg. buffer swap time per frame: $(round(sum(DEBUG_INFO.buffer_swap_time_buffer) / (1e6 * length(DEBUG_INFO.buffer_swap_time_buffer)), digits = 2)) ms")
+            push!(DEBUG_INFO.messages, "avg. buffer swap time per frame: $(round(sum(DEBUG_INFO.buffer_swap_time_buffer) / (1000 * length(DEBUG_INFO.buffer_swap_time_buffer)), digits = 2)) ms")
 
             push!(DEBUG_INFO.messages, "length(entities): $(length(entities))")
 
@@ -415,13 +416,13 @@ function start()
 
         frame_number = frame_number + 1
 
-        sleep_time_theoretical = max(0, min_ns_per_frame - (get_time(reference_time) - frame_start_time))
+        sleep_time_theoretical = max(0, min_μs_per_frame - (get_time(reference_time) - frame_start_time))
         if IS_DEBUG
             push!(DEBUG_INFO.sleep_time_theoretical_buffer, sleep_time_theoretical)
         end
 
         sleep_start_time = get_time(reference_time)
-        sleep(sleep_time_theoretical / 1e9)
+        sleep(sleep_time_theoretical / 1e6)
         sleep_end_time = get_time(reference_time)
         if IS_DEBUG
             push!(DEBUG_INFO.sleep_time_observed_buffer, sleep_end_time - sleep_start_time)
