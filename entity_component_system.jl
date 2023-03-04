@@ -2,11 +2,6 @@ struct CollisionBox
     shape::SD.Rectangle{Int}
 end
 
-struct Position
-    x::Int
-    y::Int
-end
-
 struct InvVelocity
     x::Int
     y::Int
@@ -19,7 +14,7 @@ end
 
 struct Entity
     is_alive::Bool
-    position::Position
+    position::Point
     inv_velocity::InvVelocity
     collision_box::CollisionBox
     texture_index::TextureIndex
@@ -44,7 +39,7 @@ isnull(inv_velocity::InvVelocity) = inv_velocity == null(typeof(inv_velocity))
 
 is_movable(entity) = !isnull(entity.inv_velocity)
 
-get_point(position::Position) = SD.Point(position.x, position.y)
+get_point(position::Point) = SD.Point(position.x, position.y)
 
 function add_entity!(entities, entity)
     for (i, entity_i) in enumerate(entities)
@@ -60,10 +55,10 @@ end
 
 move(position, inv_velocity, dt) = position + dt ÷ inv_velocity
 
-function move(position::Position, inv_velocity::InvVelocity, dt)
+function move(position::Point, inv_velocity::InvVelocity, dt)
     i = move(position.x, inv_velocity.x, dt)
     j = move(position.y, inv_velocity.y, dt)
-    return Position(i, j)
+    return Point(i, j)
 end
 
 function update!(entities, dt)
