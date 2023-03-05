@@ -5,6 +5,8 @@ end
 
 struct Entity
     is_alive::Bool
+    is_jumpable::Bool
+    is_touching_ground::Bool
     position::Vec
     velocity::Vec
     collision_box::AABB
@@ -18,6 +20,10 @@ const NULL_VELOCITY = Vec(0, 0)
 const NULL_COLLISION_BOX = AABB(Vec(typemin(Int), typemin(Int)), typemin(Int), typemin(Int))
 
 is_alive(entity) = entity.is_alive
+
+is_jumpable(entity) = entity.is_jumpable
+
+is_free_falling(entity) = !entity.is_touching_ground || (entity.velocity.x < zero(entity.velocity.x))
 
 is_drawable(entity) = entity.texture_index.start > zero(entity.texture_index.start)
 
@@ -54,6 +60,8 @@ end
 get_absolute_collision_box(collision_box, position) = AABB(Vec(collision_box.position.x + position.x - one(position.x), collision_box.position.y + position.y - one(position.y)), collision_box.x_width, collision_box.y_width)
 
 function update!(entities, dt)
+    # make sure all time gets consumed
+    counter = 1
     while dt > zero(dt)
         push!(DEBUG_INFO.messages, "dt: $(dt)")
         null_collision = (0, 0, 0, 2, typemax(Int))
@@ -68,8 +76,22 @@ function update!(entities, dt)
                         absolute_collision_box_j = get_absolute_collision_box(entities[j].collision_box, entities[j].position)
 
                         if !((entities[i].body_type == STATIC) && (entities[j].body_type == STATIC))
-                            dx_ij = (entities[i].velocity.x - entities[j].velocity.x) * dt
-                            dy_ij = (entities[i].velocity.y - entities[j].velocity.y) * dt
+                            if is_jumpable(entities[i]) && is_free_falling(entities[i])
+                                gravity = 1
+                                new_velocity_i = Vec(entities[i].velocity.x + gravity * dt ÷ 20, entities[i].velocity.y)
+                            else
+                                new_velocity_i = entities[i].velocity
+                            end
+
+                            if is_jumpable(entities[j]) && is_free_falling(entities[j])
+                                gravity = 1
+                                new_velocity_j = Vec(entities[j].velocity.x + gravity * dt ÷ 20, entities[j].velocity.y)
+                            else
+                                new_velocity_j = entities[j].velocity
+                            end
+
+                            dx_ij = (new_velocity_i.x - new_velocity_j.x) * dt
+                            dy_ij = (new_velocity_i.y - new_velocity_j.y) * dt
 
                             absolute_collision_box_j_expanded = get_relative_aabb(absolute_collision_box_i, absolute_collision_box_j)
 
@@ -85,6 +107,7 @@ function update!(entities, dt)
                                 push!(DEBUG_INFO.messages, "absolute_collision_box_j: $(absolute_collision_box_j)")
 
                                 hit_time = (relative_hit_time.num * dt) ÷ relative_hit_time.den
+                                @show i, j, hit_dimension, hit_direction, relative_hit_time, hit_time
                                 push!(DEBUG_INFO.messages, "i, j, hit_dimension, hit_direction, relative_hit_time, hit_time: $(i), $(j), $(hit_dimension), $(hit_direction), $(relative_hit_time), $(hit_time)")
 
                                 if hit_time < first_collision[5]
@@ -116,6 +139,13 @@ function update!(entities, dt)
 
             dt = dt - hit_time
         end
+
+        @show counter, dt
+        counter += 1
+
+        if counter >=10
+            error("counter: $(counter)")
+        end
     end
 
     return nothing
@@ -129,14 +159,17 @@ function handle_collision(static_entity, dynamic_entity, collision_info)
 
     if hit_dimension == 1
         new_velocity_dynamic_entity = Vec(static_entity.velocity.x, dynamic_entity.velocity.y)
+        new_is_touching_ground_dynamic_entity = dynamic_entity.is_touching_ground
 
         if hit_direction == 1
             new_position_dynamic_entity = Vec(dynamic_entity.position.x + get_x_min(absolute_collision_box_static_entity) - get_x_max(absolute_collision_box_dynamic_entity), dynamic_entity.position.y)
+            new_is_touching_ground_dynamic_entity = true
         else
             new_position_dynamic_entity = Vec(dynamic_entity.position.x - (get_x_min(absolute_collision_box_dynamic_entity) - get_x_max(absolute_collision_box_static_entity)), dynamic_entity.position.y)
         end
     else
         new_velocity_dynamic_entity = Vec(dynamic_entity.velocity.x, static_entity.velocity.y)
+        new_is_touching_ground_dynamic_entity = dynamic_entity.is_touching_ground
 
         if hit_direction == 1
             new_position_dynamic_entity = Vec(dynamic_entity.position.x, dynamic_entity.position.y + get_y_min(absolute_collision_box_static_entity) - get_y_max(absolute_collision_box_dynamic_entity))
@@ -147,6 +180,8 @@ function handle_collision(static_entity, dynamic_entity, collision_info)
 
     dynamic_entity = typeof(dynamic_entity)(
         dynamic_entity.is_alive,
+        dynamic_entity.is_jumpable,
+        new_is_touching_ground_dynamic_entity,
         new_position_dynamic_entity,
         new_velocity_dynamic_entity,
         dynamic_entity.collision_box,
@@ -162,12 +197,21 @@ function integrate!(entities, dt)
     for i in 1:length(entities)
         entity = entities[i]
 
-        if is_movable(entity)
-            position = entity.position
+        if is_jumpable(entity) && is_free_falling(entity)
             velocity = entity.velocity
 
-            dx = velocity.x * dt
-            dy = velocity.y * dt
+            gravity = 1
+
+            new_velocity = Vec(velocity.x + gravity * dt ÷ 20, velocity.y)
+        else
+            new_velocity = entity.velocity
+        end
+
+        if is_movable(entity)
+            position = entity.position
+
+            dx = new_velocity.x * dt
+            dy = new_velocity.y * dt
 
             new_position = Vec(position.x + dx, position.y + dy)
         else
@@ -182,8 +226,10 @@ function integrate!(entities, dt)
 
         entities[i] = typeof(entity)(
             entity.is_alive,
+            entity.is_jumpable,
+            entity.is_touching_ground,
             new_position,
-            entity.velocity,
+            new_velocity,
             entity.collision_box,
             entity.body_type,
             entity.texture_index,
