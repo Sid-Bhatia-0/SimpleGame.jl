@@ -73,9 +73,9 @@ function update!(entities, dt)
 
                             absolute_collision_box_j_expanded = get_relative_aabb(absolute_collision_box_i, absolute_collision_box_j)
 
-                            hit_dimension, relative_hit_time = simulate(absolute_collision_box_i.position, absolute_collision_box_j_expanded, dx_ij, dy_ij)
+                            hit_dimension, hit_direction, relative_hit_time = simulate(absolute_collision_box_i.position, absolute_collision_box_j_expanded, dx_ij, dy_ij)
 
-                            if !iszero(hit_dimension) && (zero(relative_hit_time) <= relative_hit_time <= one(relative_hit_time)) # collision occurred
+                            if !iszero(hit_dimension) && !iszero(hit_direction) && (zero(relative_hit_time) <= relative_hit_time <= one(relative_hit_time)) # collision occurred
                                 push!(DEBUG_INFO.messages, "Collision occurred")
 
                                 push!(DEBUG_INFO.messages, "entities[i].body_type: $(entities[i].body_type)")
@@ -85,10 +85,10 @@ function update!(entities, dt)
                                 push!(DEBUG_INFO.messages, "absolute_collision_box_j: $(absolute_collision_box_j)")
 
                                 hit_time = (relative_hit_time.num * dt) ÷ relative_hit_time.den
-                                push!(DEBUG_INFO.messages, "i, j, hit_dimension, relative_hit_time, hit_time: $(i), $(j), $(hit_dimension), $(relative_hit_time), $(hit_time)")
+                                push!(DEBUG_INFO.messages, "i, j, hit_dimension, hit_direction, relative_hit_time, hit_time: $(i), $(j), $(hit_dimension), $(hit_direction), $(relative_hit_time), $(hit_time)")
 
                                 if hit_time < first_collision[5]
-                                    first_collision = (i, j, hit_dimension, relative_hit_time, hit_time)
+                                    first_collision = (i, j, hit_dimension, hit_direction, relative_hit_time, hit_time)
                                 end
                             end
                         end
@@ -102,7 +102,7 @@ function update!(entities, dt)
             integrate!(entities, dt)
             dt = zero(dt)
         else
-            i, j, hit_dimension, relative_hit_time, hit_time = first_collision
+            i, j, hit_dimension, hit_direction, relative_hit_time, hit_time = first_collision
 
             integrate!(entities, hit_time)
 
@@ -122,15 +122,38 @@ function update!(entities, dt)
 end
 
 function handle_collision(static_entity, dynamic_entity, collision_info)
-    _, _, hit_dimension, relative_hit_time, hit_time = collision_info
+    _, _, hit_dimension, hit_direction, relative_hit_time, hit_time = collision_info
+
+    absolute_collision_box_static_entity = get_absolute_collision_box(static_entity.collision_box, static_entity.position)
+    absolute_collision_box_dynamic_entity = get_absolute_collision_box(dynamic_entity.collision_box, dynamic_entity.position)
 
     if hit_dimension == 1
-        new_dynamic_entity_velocity = Vec(static_entity.velocity.x, dynamic_entity.velocity.y)
+        new_velocity_dynamic_entity = Vec(static_entity.velocity.x, dynamic_entity.velocity.y)
+
+        if hit_direction == 1
+            new_position_dynamic_entity = Vec(dynamic_entity.position.x + get_x_min(absolute_collision_box_static_entity) - get_x_max(absolute_collision_box_dynamic_entity), dynamic_entity.position.y)
+        else
+            new_position_dynamic_entity = Vec(dynamic_entity.position.x - (get_x_min(absolute_collision_box_dynamic_entity) - get_x_max(absolute_collision_box_static_entity)), dynamic_entity.position.y)
+        end
     else
-        new_dynamic_entity_velocity = Vec(dynamic_entity.velocity.x, static_entity.velocity.y)
+        new_velocity_dynamic_entity = Vec(dynamic_entity.velocity.x, static_entity.velocity.y)
+
+        if hit_direction == 1
+            new_position_dynamic_entity = Vec(dynamic_entity.position.x, dynamic_entity.position.y + get_y_min(absolute_collision_box_static_entity) - get_y_max(absolute_collision_box_dynamic_entity))
+        else
+            new_position_dynamic_entity = Vec(dynamic_entity.position.x, dynamic_entity.position.y - (get_y_min(absolute_collision_box_dynamic_entity) - get_y_max(absolute_collision_box_static_entity)))
+        end
     end
 
-    dynamic_entity = (Accessors.@set dynamic_entity.velocity = new_dynamic_entity_velocity)
+    dynamic_entity = typeof(dynamic_entity)(
+        dynamic_entity.is_alive,
+        new_position_dynamic_entity,
+        new_velocity_dynamic_entity,
+        dynamic_entity.collision_box,
+        dynamic_entity.body_type,
+        dynamic_entity.texture_index,
+        dynamic_entity.animation_state,
+    )
 
     return static_entity, dynamic_entity
 end

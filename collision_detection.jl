@@ -100,12 +100,13 @@ function simulate(point::Vec, aabb::AABB, dx, dy)
     y_min, y_max = get_y_extrema(aabb)
 
     hit_dimension = 0
+    hit_direction = 0
     relative_hit_time = 0 // 1
 
     if (iszero(dx) && (iszero(dy))) ||
         (iszero(dx) && ((x_0 <= x_min) || (x_0 >= x_max))) ||
         (iszero(dy) && ((y_0 <= y_min) || (y_0 >= y_max)))
-        return hit_dimension, relative_hit_time
+        return hit_dimension, hit_direction, relative_hit_time
     end
 
     t_x_min = (x_min - x_0) // dx
@@ -119,12 +120,14 @@ function simulate(point::Vec, aabb::AABB, dx, dy)
     if (t_x_entry < t_y_exit) && (t_y_entry < t_x_exit)
         if t_x_entry <= t_y_entry
             hit_dimension = 2
+            hit_direction = sign(dy)
             relative_hit_time = t_y_entry
         else
             hit_dimension = 1
+            hit_direction = sign(dx)
             relative_hit_time = t_x_entry
         end
     end
 
-    return hit_dimension, relative_hit_time
+    return hit_dimension, hit_direction, relative_hit_time
 end
