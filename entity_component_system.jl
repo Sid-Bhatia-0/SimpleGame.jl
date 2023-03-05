@@ -60,26 +60,16 @@ function update!(entities, dt)
         first_collision = null_collision
 
         for i in 1 : length(entities) - 1
-            entity_i = entities[i]
-
-            if is_alive(entity_i) && is_collidable(entity_i)
-                body_type_i = entity_i.body_type
-                collision_box_i = entity_i.collision_box
-                absolute_collision_box_i = get_absolute_collision_box(collision_box_i, entity_i.position)
-                velocity_i = entity_i.velocity
+            if is_alive(entities[i]) && is_collidable(entities[i])
+                absolute_collision_box_i = get_absolute_collision_box(entities[i].collision_box, entities[i].position)
 
                 for j in i + 1 : length(entities)
-                    entity_j = entities[j]
+                    if is_alive(entities[j]) && is_collidable(entities[j])
+                        absolute_collision_box_j = get_absolute_collision_box(entities[j].collision_box, entities[j].position)
 
-                    if is_alive(entity_j) && is_collidable(entity_j)
-                        body_type_j = entity_j.body_type
-                        collision_box_j = entity_j.collision_box
-                        absolute_collision_box_j = get_absolute_collision_box(collision_box_j, entity_j.position)
-                        velocity_j = entity_j.velocity
-
-                        if !((body_type_i == STATIC) && (body_type_j == STATIC))
-                            dx_ij = (velocity_i.x - velocity_j.x) * dt
-                            dy_ij = (velocity_i.y - velocity_j.y) * dt
+                        if !((entities[i].body_type == STATIC) && (entities[j].body_type == STATIC))
+                            dx_ij = (entities[i].velocity.x - entities[j].velocity.x) * dt
+                            dy_ij = (entities[i].velocity.y - entities[j].velocity.y) * dt
 
                             absolute_collision_box_j_expanded = get_relative_aabb(absolute_collision_box_i, absolute_collision_box_j)
 
@@ -88,13 +78,11 @@ function update!(entities, dt)
                             if !iszero(hit_dimension) && (zero(relative_hit_time) <= relative_hit_time <= one(relative_hit_time)) # collision occurred
                                 push!(DEBUG_INFO.messages, "Collision occurred")
 
-                                push!(DEBUG_INFO.messages, "body_type_i: $(body_type_i)")
+                                push!(DEBUG_INFO.messages, "entities[i].body_type: $(entities[i].body_type)")
                                 push!(DEBUG_INFO.messages, "absolute_collision_box_i: $(absolute_collision_box_i)")
-                                push!(DEBUG_INFO.messages, "velocity_i: $(velocity_i)")
 
-                                push!(DEBUG_INFO.messages, "body_type_j: $(body_type_j)")
+                                push!(DEBUG_INFO.messages, "entities[j].body_type: $(entities[j].body_type)")
                                 push!(DEBUG_INFO.messages, "absolute_collision_box_j: $(absolute_collision_box_j)")
-                                push!(DEBUG_INFO.messages, "velocity_j: $(velocity_j)")
 
                                 hit_time = (relative_hit_time.num * dt) ÷ relative_hit_time.den
                                 push!(DEBUG_INFO.messages, "i, j, hit_dimension, relative_hit_time, hit_time: $(i), $(j), $(hit_dimension), $(relative_hit_time), $(hit_time)")
@@ -118,43 +106,33 @@ function update!(entities, dt)
 
             integrate!(entities, hit_time)
 
-            entity_i = entities[i]
-            entity_j = entities[j]
-
-            body_type_i = entity_i.body_type
-            velocity_i = entity_i.velocity
-
-            body_type_j = entity_j.body_type
-            velocity_j = entity_j.velocity
-
-            if (entity_i.body_type == STATIC) && (entity_j.body_type == DYNAMIC)
-                new_velocity_i = velocity_i
-
-                if hit_dimension == 1
-                    new_velocity_j = Vec(velocity_i.x, velocity_j.y)
-                else
-                    new_velocity_j = Vec(velocity_j.x, velocity_i.y)
-                end
-            elseif (body_type_i == DYNAMIC) && (body_type_j == STATIC)
-                new_velocity_j = velocity_j
-
-                if hit_dimension == 1
-                    new_velocity_i = Vec(velocity_j.x, velocity_i.y)
-                else
-                    new_velocity_i = Vec(velocity_i.x, velocity_j.y)
-                end
+            if (entities[i].body_type == STATIC) && (entities[j].body_type == DYNAMIC)
+                entities[i], entities[j] = handle_collision(entities[i], entities[j], first_collision)
+            elseif (entities[j].body_type == STATIC) && (entities[i].body_type == DYNAMIC)
+                entities[j], entities[i] = handle_collision(entities[j], entities[i], first_collision)
             elseif (body_type_i == DYNAMIC) && (body_type_j == DYNAMIC)
                 error("Not implemented")
             end
-
-            entities[i] = (Accessors.@set entity_i.velocity = new_velocity_i)
-            entities[j] = (Accessors.@set entity_j.velocity = new_velocity_j)
 
             dt = dt - hit_time
         end
     end
 
     return nothing
+end
+
+function handle_collision(static_entity, dynamic_entity, collision_info)
+    _, _, hit_dimension, relative_hit_time, hit_time = collision_info
+
+    if hit_dimension == 1
+        new_dynamic_entity_velocity = Vec(static_entity.velocity.x, dynamic_entity.velocity.y)
+    else
+        new_dynamic_entity_velocity = Vec(dynamic_entity.velocity.x, static_entity.velocity.y)
+    end
+
+    dynamic_entity = (Accessors.@set dynamic_entity.velocity = new_dynamic_entity_velocity)
+
+    return static_entity, dynamic_entity
 end
 
 function integrate!(entities, dt)
