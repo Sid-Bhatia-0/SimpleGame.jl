@@ -185,6 +185,7 @@ function start()
         true,
         false,
         false,
+        false,
         Vec(get_block_start(1, PIXEL_LENGTH), get_block_start(1, PIXEL_LENGTH)),
         NULL_VELOCITY,
         NULL_COLLISION_BOX,
@@ -198,6 +199,7 @@ function start()
         true,
         true,
         false,
+        false,
         Vec(get_block_start(540, PIXEL_LENGTH), get_block_start(960, PIXEL_LENGTH)),
         NULL_VELOCITY,
         AABB(Vec(get_block_start(1, PIXEL_LENGTH), get_block_start(1, PIXEL_LENGTH)), 32 * 4 * PIXEL_LENGTH, 24 * 4 * PIXEL_LENGTH),
@@ -210,6 +212,7 @@ function start()
     add_entity!(entities, Entity(
         true,
         false,
+        true,
         false,
         Vec(get_block_start(975, PIXEL_LENGTH), get_block_start(1, PIXEL_LENGTH)),
         NULL_VELOCITY,
@@ -222,6 +225,7 @@ function start()
     # left boundary wall
     add_entity!(entities, Entity(
         true,
+        false,
         false,
         false,
         Vec(get_block_start(1 - 64, PIXEL_LENGTH), get_block_start(1 - 64, PIXEL_LENGTH)),
@@ -237,6 +241,7 @@ function start()
         true,
         false,
         false,
+        false,
         Vec(get_block_start(1 - 64, PIXEL_LENGTH), get_block_start(1920 + 1, PIXEL_LENGTH)),
         NULL_VELOCITY,
         AABB(Vec(get_block_start(1, PIXEL_LENGTH), get_block_start(1, PIXEL_LENGTH)), (1080 + 2 * 64) * PIXEL_LENGTH, 64 * PIXEL_LENGTH),
@@ -248,6 +253,7 @@ function start()
     # top boundary wall
     add_entity!(entities, Entity(
         true,
+        false,
         false,
         false,
         Vec(get_block_start(1 - 64, PIXEL_LENGTH), get_block_start(1, PIXEL_LENGTH)),

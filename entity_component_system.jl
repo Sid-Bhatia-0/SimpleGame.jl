@@ -6,6 +6,7 @@ end
 struct Entity
     is_alive::Bool
     is_jumpable::Bool
+    is_platform::Bool
     is_touching_ground::Bool
     position::Vec
     velocity::Vec
@@ -23,7 +24,9 @@ is_alive(entity) = entity.is_alive
 
 is_jumpable(entity) = entity.is_jumpable
 
-is_free_falling(entity) = !entity.is_touching_ground || (entity.velocity.x < zero(entity.velocity.x))
+is_platform(entity) = entity.is_platform
+
+is_gravity_active(entity) = !entity.is_touching_ground || (entity.velocity.x < zero(entity.velocity.x))
 
 is_drawable(entity) = entity.texture_index.start > zero(entity.texture_index.start)
 
@@ -69,49 +72,55 @@ function update!(entities, dt)
 
         for i in 1 : length(entities) - 1
             if is_alive(entities[i]) && is_collidable(entities[i])
-                absolute_collision_box_i = get_absolute_collision_box(entities[i].collision_box, entities[i].position)
 
                 for j in i + 1 : length(entities)
                     if is_alive(entities[j]) && is_collidable(entities[j])
-                        absolute_collision_box_j = get_absolute_collision_box(entities[j].collision_box, entities[j].position)
 
-                        if !((entities[i].body_type == STATIC) && (entities[j].body_type == STATIC))
-                            if is_jumpable(entities[i]) && is_free_falling(entities[i])
-                                gravity = 1
-                                new_velocity_i = Vec(entities[i].velocity.x + gravity * dt ÷ 20, entities[i].velocity.y)
+                        k1, k2, entity1, entity2 = sort_dynamic_static(i, j, entities[i], entities[j])
+
+                        if !((entity1.body_type == STATIC) && (entity2.body_type == STATIC))
+
+                            absolute_collision_box1 = get_absolute_collision_box(entity1.collision_box, entity1.position)
+                            absolute_collision_box2 = get_absolute_collision_box(entity2.collision_box, entity2.position)
+
+                            if is_jumpable(entity1) && is_gravity_active(entity1)
+                                inv_gravity = 20
+                                new_velocity1 = Vec(entity1.velocity.x + dt ÷ inv_gravity, entity1.velocity.y)
                             else
-                                new_velocity_i = entities[i].velocity
+                                new_velocity1 = entity1.velocity
                             end
 
-                            if is_jumpable(entities[j]) && is_free_falling(entities[j])
-                                gravity = 1
-                                new_velocity_j = Vec(entities[j].velocity.x + gravity * dt ÷ 20, entities[j].velocity.y)
+                            if is_jumpable(entity2) && is_gravity_active(entity2)
+                                inv_gravity = 20
+                                new_velocity2 = Vec(entity2.velocity.x + dt ÷ inv_gravity, entity2.velocity.y)
                             else
-                                new_velocity_j = entities[j].velocity
+                                new_velocity2 = entity2.velocity
                             end
 
-                            dx_ij = (new_velocity_i.x - new_velocity_j.x) * dt
-                            dy_ij = (new_velocity_i.y - new_velocity_j.y) * dt
+                            dx12 = (new_velocity1.x - new_velocity2.x) * dt
+                            dy12 = (new_velocity1.y - new_velocity2.y) * dt
 
-                            absolute_collision_box_j_expanded = get_relative_aabb(absolute_collision_box_i, absolute_collision_box_j)
+                            absolute_collision_box2_expanded = get_relative_aabb(absolute_collision_box1, absolute_collision_box2)
 
-                            hit_dimension, hit_direction, relative_hit_time = simulate(absolute_collision_box_i.position, absolute_collision_box_j_expanded, dx_ij, dy_ij)
+                            hit_dimension, hit_direction, relative_hit_time = simulate(absolute_collision_box1.position, absolute_collision_box2_expanded, dx12, dy12)
 
                             if !iszero(hit_dimension) && !iszero(hit_direction) && (zero(relative_hit_time) <= relative_hit_time <= one(relative_hit_time)) # collision occurred
                                 push!(DEBUG_INFO.messages, "Collision occurred")
 
-                                push!(DEBUG_INFO.messages, "entities[i].body_type: $(entities[i].body_type)")
-                                push!(DEBUG_INFO.messages, "absolute_collision_box_i: $(absolute_collision_box_i)")
+                                push!(DEBUG_INFO.messages, "k1: $(k1)")
+                                push!(DEBUG_INFO.messages, "entity1: $(entity1)")
+                                push!(DEBUG_INFO.messages, "absolute_collision_box1: $(absolute_collision_box1)")
 
-                                push!(DEBUG_INFO.messages, "entities[j].body_type: $(entities[j].body_type)")
-                                push!(DEBUG_INFO.messages, "absolute_collision_box_j: $(absolute_collision_box_j)")
+                                push!(DEBUG_INFO.messages, "k2: $(k2)")
+                                push!(DEBUG_INFO.messages, "entity2: $(entity2)")
+                                push!(DEBUG_INFO.messages, "absolute_collision_box2: $(absolute_collision_box2)")
 
                                 hit_time = (relative_hit_time.num * dt) ÷ relative_hit_time.den
-                                @show i, j, hit_dimension, hit_direction, relative_hit_time, hit_time
-                                push!(DEBUG_INFO.messages, "i, j, hit_dimension, hit_direction, relative_hit_time, hit_time: $(i), $(j), $(hit_dimension), $(hit_direction), $(relative_hit_time), $(hit_time)")
+                                @show k1, k2, hit_dimension, hit_direction, relative_hit_time, hit_time
+                                push!(DEBUG_INFO.messages, "k1, k2, hit_dimension, hit_direction, relative_hit_time, hit_time: $(k1), $(k2), $(hit_dimension), $(hit_direction), $(relative_hit_time), $(hit_time)")
 
                                 if hit_time < first_collision[5]
-                                    first_collision = (i, j, hit_dimension, hit_direction, relative_hit_time, hit_time)
+                                    first_collision = (k1, k2, hit_dimension, hit_direction, relative_hit_time, hit_time)
                                 end
                             end
                         end
@@ -120,23 +129,16 @@ function update!(entities, dt)
             end
         end
 
-        push!(DEBUG_INFO.messages, "first_collision: $(first_collision)")
+        push!(DEBUG_INFO.messages, "counter, first_collision: $(counter), $(first_collision)")
         if first_collision == null_collision
             integrate!(entities, dt)
             dt = zero(dt)
         else
-            i, j, hit_dimension, hit_direction, relative_hit_time, hit_time = first_collision
-
+            # here we need to do something about the repeated collisions at hit_time of 0
+            # make it a geometric calculation. Check whether a jumpable entity is_touching_ground
+            k1, k2, hit_dimension, hit_direction, relative_hit_time, hit_time = first_collision
             integrate!(entities, hit_time)
-
-            if (entities[i].body_type == STATIC) && (entities[j].body_type == DYNAMIC)
-                entities[i], entities[j] = handle_collision(entities[i], entities[j], first_collision)
-            elseif (entities[j].body_type == STATIC) && (entities[i].body_type == DYNAMIC)
-                entities[j], entities[i] = handle_collision(entities[j], entities[i], first_collision)
-            elseif (body_type_i == DYNAMIC) && (body_type_j == DYNAMIC)
-                error("Not implemented")
-            end
-
+            entities[k1], entities[k2] = handle_collision(entities[k1], entities[k2], first_collision)
             dt = dt - hit_time
         end
 
@@ -151,58 +153,70 @@ function update!(entities, dt)
     return nothing
 end
 
-function handle_collision(static_entity, dynamic_entity, collision_info)
+function sort_dynamic_static(i1, i2, entity1, entity2)
+    if (entity1.body_type == STATIC) && (entity2.body_type == DYNAMIC)
+        return i2, i1, entity2, entity1
+    else
+        return i1, i2, entity1, entity2
+    end
+end
+
+function handle_collision(entity1, entity2, collision_info)
+    @assert !((entity1.body_type == DYNAMIC) && (entity2.body_type == DYNAMIC))
+
     _, _, hit_dimension, hit_direction, relative_hit_time, hit_time = collision_info
 
-    absolute_collision_box_static_entity = get_absolute_collision_box(static_entity.collision_box, static_entity.position)
-    absolute_collision_box_dynamic_entity = get_absolute_collision_box(dynamic_entity.collision_box, dynamic_entity.position)
+    absolute_collision_box1 = get_absolute_collision_box(entity1.collision_box, entity1.position)
+    absolute_collision_box2 = get_absolute_collision_box(entity2.collision_box, entity2.position)
 
     if hit_dimension == 1
-        new_velocity_dynamic_entity = Vec(static_entity.velocity.x, dynamic_entity.velocity.y)
-        new_is_touching_ground_dynamic_entity = dynamic_entity.is_touching_ground
+        new_velocity1 = Vec(entity2.velocity.x, entity1.velocity.y)
 
         if hit_direction == 1
-            new_position_dynamic_entity = Vec(dynamic_entity.position.x + get_x_min(absolute_collision_box_static_entity) - get_x_max(absolute_collision_box_dynamic_entity), dynamic_entity.position.y)
-            new_is_touching_ground_dynamic_entity = true
+            new_position1 = Vec(entity1.position.x + get_x_min(absolute_collision_box2) - get_x_max(absolute_collision_box1), entity1.position.y)
+            new_is_touching_ground = true
         else
-            new_position_dynamic_entity = Vec(dynamic_entity.position.x - (get_x_min(absolute_collision_box_dynamic_entity) - get_x_max(absolute_collision_box_static_entity)), dynamic_entity.position.y)
+            new_position1 = Vec(entity1.position.x - (get_x_min(absolute_collision_box1) - get_x_max(absolute_collision_box2)), entity1.position.y)
+            new_is_touching_ground = entity1.is_touching_ground
         end
     else
-        new_velocity_dynamic_entity = Vec(dynamic_entity.velocity.x, static_entity.velocity.y)
-        new_is_touching_ground_dynamic_entity = dynamic_entity.is_touching_ground
+        new_velocity1 = Vec(entity1.velocity.x, entity2.velocity.y)
+        new_is_touching_ground = entity1.is_touching_ground
 
         if hit_direction == 1
-            new_position_dynamic_entity = Vec(dynamic_entity.position.x, dynamic_entity.position.y + get_y_min(absolute_collision_box_static_entity) - get_y_max(absolute_collision_box_dynamic_entity))
+            new_position1 = Vec(entity1.position.x, entity1.position.y + get_y_min(absolute_collision_box2) - get_y_max(absolute_collision_box1))
         else
-            new_position_dynamic_entity = Vec(dynamic_entity.position.x, dynamic_entity.position.y - (get_y_min(absolute_collision_box_dynamic_entity) - get_y_max(absolute_collision_box_static_entity)))
+            new_position1 = Vec(entity1.position.x, entity1.position.y - (get_y_min(absolute_collision_box1) - get_y_max(absolute_collision_box2)))
         end
     end
 
-    dynamic_entity = typeof(dynamic_entity)(
-        dynamic_entity.is_alive,
-        dynamic_entity.is_jumpable,
-        new_is_touching_ground_dynamic_entity,
-        new_position_dynamic_entity,
-        new_velocity_dynamic_entity,
-        dynamic_entity.collision_box,
-        dynamic_entity.body_type,
-        dynamic_entity.texture_index,
-        dynamic_entity.animation_state,
+    entity1 = typeof(entity1)(
+        entity1.is_alive,
+        entity1.is_jumpable,
+        entity1.is_platform,
+        new_is_touching_ground,
+        new_position1,
+        new_velocity1,
+        entity1.collision_box,
+        entity1.body_type,
+        entity1.texture_index,
+        entity1.animation_state,
     )
 
-    return static_entity, dynamic_entity
+    return entity1, entity2
 end
 
 function integrate!(entities, dt)
+    # update is_touching_ground somewhere
     for i in 1:length(entities)
         entity = entities[i]
 
-        if is_jumpable(entity) && is_free_falling(entity)
+        if is_jumpable(entity) && is_gravity_active(entity)
             velocity = entity.velocity
 
-            gravity = 1
+            inv_gravity = 20
 
-            new_velocity = Vec(velocity.x + gravity * dt ÷ 20, velocity.y)
+            new_velocity = Vec(velocity.x + dt ÷ inv_gravity, velocity.y)
         else
             new_velocity = entity.velocity
         end
@@ -227,6 +241,7 @@ function integrate!(entities, dt)
         entities[i] = typeof(entity)(
             entity.is_alive,
             entity.is_jumpable,
+            entity.is_platform,
             entity.is_touching_ground,
             new_position,
             new_velocity,
