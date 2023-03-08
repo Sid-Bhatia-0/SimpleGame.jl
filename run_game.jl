@@ -182,6 +182,7 @@ function start()
 
     # background
     add_entity!(entities, Entity(
+        1,
         true,
         false,
         false,
@@ -196,6 +197,7 @@ function start()
 
     # player
     add_entity!(entities, Entity(
+        2,
         true,
         true,
         false,
@@ -210,6 +212,7 @@ function start()
 
     # floor
     add_entity!(entities, Entity(
+        3,
         true,
         false,
         true,
@@ -224,6 +227,7 @@ function start()
 
     # left boundary wall
     add_entity!(entities, Entity(
+        4,
         true,
         false,
         false,
@@ -238,6 +242,7 @@ function start()
 
     # right boundary wall
     add_entity!(entities, Entity(
+        5,
         true,
         false,
         false,
@@ -252,6 +257,7 @@ function start()
 
     # top boundary wall
     add_entity!(entities, Entity(
+        6,
         true,
         false,
         false,

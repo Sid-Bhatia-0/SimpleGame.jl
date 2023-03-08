@@ -4,6 +4,7 @@ struct ShapeDrawable{S, C}
 end
 
 struct Entity
+    index::Int
     is_alive::Bool
     is_jumpable::Bool
     is_platform::Bool
@@ -191,6 +192,7 @@ function handle_collision(entity1, entity2, collision_info)
     end
 
     entity1 = typeof(entity1)(
+        entity1.index,
         entity1.is_alive,
         entity1.is_jumpable,
         entity1.is_platform,
@@ -239,6 +241,7 @@ function integrate!(entities, dt)
         end
 
         entities[i] = typeof(entity)(
+            entity.index,
             entity.is_alive,
             entity.is_jumpable,
             entity.is_platform,
