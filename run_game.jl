@@ -178,11 +178,11 @@ function start()
     texture_atlas = TextureAtlas(color_type[])
 
     # entities
-    entities = Entity[]
+    entities = fill(MAX_ENTITIES, NULL_ENTITY)
 
     # background
-    add_entity!(entities, Entity(
-        1,
+    entities[INDEX_BACKGROUND] = Entity(
+        INDEX_BACKGROUND,
         true,
         false,
         false,
@@ -193,11 +193,11 @@ function start()
         STATIC,
         load_texture(texture_atlas, "assets/background.png"),
         null(AnimationState),
-    ))
+    )
 
     # player
-    add_entity!(entities, Entity(
-        2,
+    entities[INDEX_PLAYER] = Entity(
+        INDEX_PLAYER,
         true,
         true,
         false,
@@ -208,11 +208,11 @@ function start()
         DYNAMIC,
         load_texture(texture_atlas, "assets/burning_loop_1.png", length_scale = 4),
         AnimationState(1, 8, 100_000, 1),
-    ))
+    )
 
-    # floor
-    add_entity!(entities, Entity(
-        3,
+    # ground
+    entities[INDEX_GROUND] = Entity(
+        INDEX_GROUND,
         true,
         false,
         true,
@@ -223,11 +223,11 @@ function start()
         STATIC,
         null(TextureIndex),
         null(AnimationState),
-    ))
+    )
 
     # left boundary wall
-    add_entity!(entities, Entity(
-        4,
+    entities[INDEX_LEFT_BOUNDARY_WALL] = Entity(
+        INDEX_LEFT_BOUNDARY_WALL,
         true,
         false,
         false,
@@ -238,11 +238,11 @@ function start()
         STATIC,
         null(TextureIndex),
         null(AnimationState),
-    ))
+    )
 
     # right boundary wall
-    add_entity!(entities, Entity(
-        5,
+    entities[INDEX_RIGHT_BOUNDARY_WALL] = Entity(
+        INDEX_RIGHT_BOUNDARY_WALL,
         true,
         false,
         false,
@@ -253,11 +253,11 @@ function start()
         STATIC,
         null(TextureIndex),
         null(AnimationState),
-    ))
+    )
 
     # top boundary wall
-    add_entity!(entities, Entity(
-        6,
+    entities[INDEX_TOP_BOUNDARY_WALL] = Entity(
+        INDEX_TOP_BOUNDARY_WALL,
         true,
         false,
         false,
@@ -268,7 +268,7 @@ function start()
         STATIC,
         null(TextureIndex),
         null(AnimationState),
-    ))
+    )
 
     draw_list = Any[]
 

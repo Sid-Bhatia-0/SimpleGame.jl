@@ -21,6 +21,17 @@ const NULL_POSITION = Vec(typemin(Int), typemin(Int))
 const NULL_VELOCITY = Vec(0, 0)
 const NULL_COLLISION_BOX = AABB(Vec(typemin(Int), typemin(Int)), typemin(Int), typemin(Int))
 
+const MAX_ENTITIES = 6
+
+@enum EntityIndex begin
+    INDEX_BACKGROUND = 1
+    INDEX_PLAYER
+    INDEX_GROUND
+    INDEX_LEFT_BOUNDARY_WALL
+    INDEX_RIGHT_BOUNDARY_WALL
+    INDEX_TOP_BOUNDARY_WALL
+end
+
 is_alive(entity) = entity.is_alive
 
 is_jumpable(entity) = entity.is_jumpable
