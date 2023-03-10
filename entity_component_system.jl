@@ -128,8 +128,8 @@ function update!(entities, dt)
                         dy = entity1.velocity.y * dt
 
                         if is_jumpable(entity1) && !is_on_platform(entity1)
-                            inv_gravity = 20
-                            dx = dx + (dt * dt) ÷ inv_gravity
+                            gravity = 1
+                            dx = dx + gravity * dt * dt
                         end
 
                         hit_dimension, hit_direction, relative_hit_time = simulate(absolute_collision_box1.position, absolute_collision_box2_expanded, dx, dy)
@@ -235,8 +235,8 @@ function integrate!(entities, dt)
         if is_alive(entity)
             if is_movable(entity)
                 if is_jumpable(entity) && !is_on_platform(entity)
-                    inv_gravity = 20
-                    new_velocity = Vec(entity.velocity.x + dt ÷ inv_gravity, entity.velocity.y)
+                    gravity = 1
+                    new_velocity = Vec(entity.velocity.x + gravity * dt, entity.velocity.y)
                 else
                     new_velocity = entity.velocity
                 end
