@@ -178,11 +178,10 @@ function start()
     texture_atlas = TextureAtlas(color_type[])
 
     # entities
-    entities = fill(MAX_ENTITIES, NULL_ENTITY)
+    entities = Vector{Entity}(undef, MAX_ENTITIES)
 
     # background
-    entities[INDEX_BACKGROUND] = Entity(
-        INDEX_BACKGROUND,
+    entities[Integer(INDEX_BACKGROUND)] = Entity(
         true,
         false,
         false,
@@ -196,14 +195,13 @@ function start()
     )
 
     # player
-    entities[INDEX_PLAYER] = Entity(
-        INDEX_PLAYER,
+    entities[Integer(INDEX_PLAYER)] = Entity(
         true,
         true,
         false,
         false,
         Vec(get_block_start(540, PIXEL_LENGTH), get_block_start(960, PIXEL_LENGTH)),
-        NULL_VELOCITY,
+        Vec(0, 0),
         AABB(Vec(get_block_start(1, PIXEL_LENGTH), get_block_start(1, PIXEL_LENGTH)), 32 * 4 * PIXEL_LENGTH, 24 * 4 * PIXEL_LENGTH),
         DYNAMIC,
         load_texture(texture_atlas, "assets/burning_loop_1.png", length_scale = 4),
@@ -211,8 +209,7 @@ function start()
     )
 
     # ground
-    entities[INDEX_GROUND] = Entity(
-        INDEX_GROUND,
+    entities[Integer(INDEX_GROUND)] = Entity(
         true,
         false,
         true,
@@ -226,8 +223,7 @@ function start()
     )
 
     # left boundary wall
-    entities[INDEX_LEFT_BOUNDARY_WALL] = Entity(
-        INDEX_LEFT_BOUNDARY_WALL,
+    entities[Integer(INDEX_LEFT_BOUNDARY_WALL)] = Entity(
         true,
         false,
         false,
@@ -241,8 +237,7 @@ function start()
     )
 
     # right boundary wall
-    entities[INDEX_RIGHT_BOUNDARY_WALL] = Entity(
-        INDEX_RIGHT_BOUNDARY_WALL,
+    entities[Integer(INDEX_RIGHT_BOUNDARY_WALL)] = Entity(
         true,
         false,
         false,
@@ -256,8 +251,7 @@ function start()
     )
 
     # top boundary wall
-    entities[INDEX_TOP_BOUNDARY_WALL] = Entity(
-        INDEX_TOP_BOUNDARY_WALL,
+    entities[Integer(INDEX_TOP_BOUNDARY_WALL)] = Entity(
         true,
         false,
         false,
