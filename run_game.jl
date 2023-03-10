@@ -186,6 +186,7 @@ function start()
         false,
         false,
         false,
+        false,
         Vec(get_block_start(1, PIXEL_LENGTH), get_block_start(1, PIXEL_LENGTH)),
         NULL_VELOCITY,
         NULL_COLLISION_BOX,
@@ -196,6 +197,7 @@ function start()
 
     # player
     entities[Integer(INDEX_PLAYER)] = Entity(
+        true,
         true,
         true,
         false,
@@ -211,6 +213,7 @@ function start()
     # ground
     entities[Integer(INDEX_GROUND)] = Entity(
         true,
+        false,
         false,
         true,
         false,
@@ -228,6 +231,7 @@ function start()
         false,
         false,
         false,
+        false,
         Vec(get_block_start(1 - 64, PIXEL_LENGTH), get_block_start(1 - 64, PIXEL_LENGTH)),
         NULL_VELOCITY,
         AABB(Vec(get_block_start(1, PIXEL_LENGTH), get_block_start(1, PIXEL_LENGTH)), (1080 + 2 * 64) * PIXEL_LENGTH, 64 * PIXEL_LENGTH),
@@ -242,6 +246,7 @@ function start()
         false,
         false,
         false,
+        false,
         Vec(get_block_start(1 - 64, PIXEL_LENGTH), get_block_start(1920 + 1, PIXEL_LENGTH)),
         NULL_VELOCITY,
         AABB(Vec(get_block_start(1, PIXEL_LENGTH), get_block_start(1, PIXEL_LENGTH)), (1080 + 2 * 64) * PIXEL_LENGTH, 64 * PIXEL_LENGTH),
@@ -253,6 +258,7 @@ function start()
     # top boundary wall
     entities[Integer(INDEX_TOP_BOUNDARY_WALL)] = Entity(
         true,
+        false,
         false,
         false,
         false,

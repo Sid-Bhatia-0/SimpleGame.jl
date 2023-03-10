@@ -5,6 +5,7 @@ end
 
 struct Entity
     is_alive::Bool
+    is_movable::Bool
     is_jumpable::Bool
     is_platform::Bool
     is_on_platform::Bool
@@ -45,7 +46,7 @@ is_animatable(entity) = entity.animation_state.num_frames > one(entity.animation
 
 is_collidable(entity) = entity.collision_box != NULL_COLLISION_BOX
 
-is_movable(entity) = entity.velocity != NULL_VELOCITY
+is_movable(entity) = entity.is_movable
 
 SD.Point(vec::Vec) = SD.Point(vec.x, vec.y)
 
@@ -100,7 +101,6 @@ function update!(entities, dt)
 
                 for j in 1 : length(entities)
                     if is_alive(entities[j]) && is_platform(entities[j]) && is_on(entities[i], entities[j])
-                        ei = entities[i]
                         new_is_on_platform = true
                     end
                 end
@@ -213,6 +213,7 @@ function handle_collision(entity1, entity2, collision_info)
 
     new_entity1 = typeof(entity1)(
         entity1.is_alive,
+        entity1.is_movable,
         entity1.is_jumpable,
         entity1.is_platform,
         new_is_on_platform,
@@ -257,6 +258,7 @@ function integrate!(entities, dt)
 
             entities[i] = typeof(entity)(
                 entity.is_alive,
+                entity.is_movable,
                 entity.is_jumpable,
                 entity.is_platform,
                 entity.is_on_platform,
