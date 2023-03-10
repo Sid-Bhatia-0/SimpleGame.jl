@@ -160,10 +160,6 @@ function update!(entities, dt)
             end
         end
 
-        if IS_DEBUG
-            push!(DEBUG_INFO.messages, "counter, first_collision: $(counter), $(first_collision)")
-        end
-
         if first_collision == null_collision
             integrate!(entities, dt)
             dt = zero(dt)
