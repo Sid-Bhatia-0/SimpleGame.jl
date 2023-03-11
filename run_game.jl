@@ -89,6 +89,14 @@ include("textures.jl")
 include("entity_component_system.jl")
 include("utils.jl")
 
+const PIXEL_LENGTH = 2^24
+
+get_block_start(i_block, block_length) = (i_block - one(i_block)) * block_length + one(block_length)
+get_block_end(i_block, block_length) = i_block * block_length + one(block_length)
+get_block(x, block_length) = fld1(x, block_length)
+
+get_block(vec::Vec, block_length) = Vec(get_block(vec.x, block_length), get_block(vec.y, block_length))
+
 function start()
     primary_monitor = GLFW.GetPrimaryMonitor()
     video_mode = GLFW.GetVideoMode(primary_monitor)
@@ -170,73 +178,97 @@ function start()
     texture_atlas = TextureAtlas(color_type[])
 
     # entities
-    entities = Entity[]
+    entities = Vector{Entity}(undef, MAX_ENTITIES)
 
     # background
-    add_entity!(entities, Entity(
+    entities[Integer(INDEX_BACKGROUND)] = Entity(
         true,
-        Vec(1, 1),
-        NULL_INV_VELOCITY,
+        false,
+        false,
+        false,
+        false,
+        Vec(get_block_start(1, PIXEL_LENGTH), get_block_start(1, PIXEL_LENGTH)),
+        NULL_VELOCITY,
         NULL_COLLISION_BOX,
         STATIC,
         load_texture(texture_atlas, "assets/background.png"),
         null(AnimationState),
-    ))
+    )
 
     # player
-    add_entity!(entities, Entity(
+    entities[Integer(INDEX_PLAYER)] = Entity(
         true,
-        Vec(540, 960),
-        NULL_INV_VELOCITY,
-        AABB(Vec(1, 1), 32 * 4, 24 * 4),
+        true,
+        true,
+        false,
+        false,
+        Vec(get_block_start(540, PIXEL_LENGTH), get_block_start(960, PIXEL_LENGTH)),
+        Vec(0, 0),
+        AABB(Vec(get_block_start(1, PIXEL_LENGTH), get_block_start(1, PIXEL_LENGTH)), 32 * 4 * PIXEL_LENGTH, 24 * 4 * PIXEL_LENGTH),
         DYNAMIC,
         load_texture(texture_atlas, "assets/burning_loop_1.png", length_scale = 4),
-        AnimationState(1, 8, 100_000_000, 1),
-    ))
+        AnimationState(1, 8, 100_000, 1),
+    )
 
-    # floor
-    add_entity!(entities, Entity(
+    # ground
+    entities[Integer(INDEX_GROUND)] = Entity(
         true,
-        Vec(975, 1),
-        NULL_INV_VELOCITY,
-        AABB(Vec(1, 1), 106, 1920),
+        false,
+        false,
+        true,
+        false,
+        Vec(get_block_start(975, PIXEL_LENGTH), get_block_start(1, PIXEL_LENGTH)),
+        NULL_VELOCITY,
+        AABB(Vec(get_block_start(1, PIXEL_LENGTH), get_block_start(1, PIXEL_LENGTH)), 106 * PIXEL_LENGTH, 1920 * PIXEL_LENGTH),
         STATIC,
         null(TextureIndex),
         null(AnimationState),
-    ))
+    )
 
     # left boundary wall
-    add_entity!(entities, Entity(
+    entities[Integer(INDEX_LEFT_BOUNDARY_WALL)] = Entity(
         true,
-        Vec(1 - 64, 1 - 64),
-        NULL_INV_VELOCITY,
-        AABB(Vec(1, 1), 1080 + 2 * 64, 64),
+        false,
+        false,
+        false,
+        false,
+        Vec(get_block_start(1 - 64, PIXEL_LENGTH), get_block_start(1 - 64, PIXEL_LENGTH)),
+        NULL_VELOCITY,
+        AABB(Vec(get_block_start(1, PIXEL_LENGTH), get_block_start(1, PIXEL_LENGTH)), (1080 + 2 * 64) * PIXEL_LENGTH, 64 * PIXEL_LENGTH),
         STATIC,
         null(TextureIndex),
         null(AnimationState),
-    ))
+    )
 
     # right boundary wall
-    add_entity!(entities, Entity(
+    entities[Integer(INDEX_RIGHT_BOUNDARY_WALL)] = Entity(
         true,
-        Vec(1 - 64, 1920 + 1),
-        NULL_INV_VELOCITY,
-        AABB(Vec(1, 1), 1080 + 2 * 64, 64),
+        false,
+        false,
+        false,
+        false,
+        Vec(get_block_start(1 - 64, PIXEL_LENGTH), get_block_start(1920 + 1, PIXEL_LENGTH)),
+        NULL_VELOCITY,
+        AABB(Vec(get_block_start(1, PIXEL_LENGTH), get_block_start(1, PIXEL_LENGTH)), (1080 + 2 * 64) * PIXEL_LENGTH, 64 * PIXEL_LENGTH),
         STATIC,
         null(TextureIndex),
         null(AnimationState),
-    ))
+    )
 
     # top boundary wall
-    add_entity!(entities, Entity(
+    entities[Integer(INDEX_TOP_BOUNDARY_WALL)] = Entity(
         true,
-        Vec(1 - 64, 1),
-        NULL_INV_VELOCITY,
-        AABB(Vec(1, 1), 64, 1920),
+        false,
+        false,
+        false,
+        false,
+        Vec(get_block_start(1 - 64, PIXEL_LENGTH), get_block_start(1, PIXEL_LENGTH)),
+        NULL_VELOCITY,
+        AABB(Vec(get_block_start(1, PIXEL_LENGTH), get_block_start(1, PIXEL_LENGTH)), 64 * PIXEL_LENGTH, 1920 * PIXEL_LENGTH),
         STATIC,
         null(TextureIndex),
         null(AnimationState),
-    ))
+    )
 
     draw_list = Any[]
 
@@ -246,6 +278,7 @@ function start()
 
     max_frames_per_second = 60
     min_ns_per_frame = 1_000_000_000 ÷ max_frames_per_second
+    min_μs_per_frame = 1_000_000 ÷ max_frames_per_second
 
     reference_time = time_ns()
     previous_frame_start_time = 0
@@ -291,12 +324,13 @@ function start()
         key_up_ended_down = user_input_state.keyboard_buttons[Int(GLFW.KEY_UP) + 1].ended_down
         key_down_ended_down = user_input_state.keyboard_buttons[Int(GLFW.KEY_DOWN) + 1].ended_down
 
-        if key_up_ended_down && !key_down_ended_down
-            entities[2] = (Accessors.@set player.inv_velocity.x = -1_000_000)
-        elseif !key_up_ended_down && key_down_ended_down
-            entities[2] = (Accessors.@set player.inv_velocity.x = 1_000_000)
-        else
-            entities[2] = (Accessors.@set player.inv_velocity.x = NULL_INV_VELOCITY.x)
+        key_up_went_down = SI.went_down(user_input_state.keyboard_buttons[Int(GLFW.KEY_UP) + 1])
+        key_down_went_down = SI.went_down(user_input_state.keyboard_buttons[Int(GLFW.KEY_DOWN) + 1])
+
+        if key_up_went_down && !key_down_went_down
+            entities[2] = (Accessors.@set player.velocity.x = -500_000)
+        elseif !key_up_went_down && key_down_went_down
+            entities[2] = (Accessors.@set player.velocity.x = 500_000)
         end
 
         player = entities[2]
@@ -304,11 +338,11 @@ function start()
         key_right_ended_down = user_input_state.keyboard_buttons[Int(GLFW.KEY_RIGHT) + 1].ended_down
 
         if key_left_ended_down && !key_right_ended_down
-            entities[2] = (Accessors.@set player.inv_velocity.y = -1_000_000)
+            entities[2] = (Accessors.@set player.velocity.y = -500_000)
         elseif !key_left_ended_down && key_right_ended_down
-            entities[2] = (Accessors.@set player.inv_velocity.y = 1_000_000)
+            entities[2] = (Accessors.@set player.velocity.y = 500_000)
         else
-            entities[2] = (Accessors.@set player.inv_velocity.y = NULL_INV_VELOCITY.y)
+            entities[2] = (Accessors.@set player.velocity.y = NULL_VELOCITY.y)
         end
 
         layout.reference_bounding_box = SD.Rectangle(SD.Point(1, 1), image_height, image_width)
@@ -337,25 +371,25 @@ function start()
 
             push!(DEBUG_INFO.messages, "previous frame number: $(frame_number)")
 
-            push!(DEBUG_INFO.messages, "avg. total time per frame: $(round((last(DEBUG_INFO.frame_start_time_buffer) - first(DEBUG_INFO.frame_start_time_buffer)) / (1e6 * length(DEBUG_INFO.frame_start_time_buffer) - 1), digits = 2)) ms")
+            push!(DEBUG_INFO.messages, "avg. total time per frame: $(round((last(DEBUG_INFO.frame_start_time_buffer) - first(DEBUG_INFO.frame_start_time_buffer)) / (1000 * length(DEBUG_INFO.frame_start_time_buffer) - 1), digits = 2)) ms")
 
-            push!(DEBUG_INFO.messages, "avg. event poll time per frame: $(round(sum(DEBUG_INFO.event_poll_time_buffer) / (1e6 * length(DEBUG_INFO.event_poll_time_buffer)), digits = 2)) ms")
+            push!(DEBUG_INFO.messages, "avg. event poll time per frame: $(round(sum(DEBUG_INFO.event_poll_time_buffer) / (1000 * length(DEBUG_INFO.event_poll_time_buffer)), digits = 2)) ms")
 
-            push!(DEBUG_INFO.messages, "avg. dt per frame: $(round(sum(DEBUG_INFO.dt_buffer) / (1e6 * length(DEBUG_INFO.dt_buffer)), digits = 2)) ms")
+            push!(DEBUG_INFO.messages, "avg. dt per frame: $(round(sum(DEBUG_INFO.dt_buffer) / (1000 * length(DEBUG_INFO.dt_buffer)), digits = 2)) ms")
 
-            push!(DEBUG_INFO.messages, "avg. update time per frame: $(round(sum(DEBUG_INFO.update_time_buffer) / (1e6 * length(DEBUG_INFO.update_time_buffer)), digits = 2)) ms")
+            push!(DEBUG_INFO.messages, "avg. update time per frame: $(round(sum(DEBUG_INFO.update_time_buffer) / (1000 * length(DEBUG_INFO.update_time_buffer)), digits = 2)) ms")
 
-            push!(DEBUG_INFO.messages, "avg. drawing system time per frame: $(round(sum(DEBUG_INFO.drawing_system_time_buffer) / (1e6 * length(DEBUG_INFO.drawing_system_time_buffer)), digits = 2)) ms")
+            push!(DEBUG_INFO.messages, "avg. drawing system time per frame: $(round(sum(DEBUG_INFO.drawing_system_time_buffer) / (1000 * length(DEBUG_INFO.drawing_system_time_buffer)), digits = 2)) ms")
 
-            push!(DEBUG_INFO.messages, "avg. draw time per frame: $(round(sum(DEBUG_INFO.draw_time_buffer) / (1e6 * length(DEBUG_INFO.draw_time_buffer)), digits = 2)) ms")
+            push!(DEBUG_INFO.messages, "avg. draw time per frame: $(round(sum(DEBUG_INFO.draw_time_buffer) / (1000 * length(DEBUG_INFO.draw_time_buffer)), digits = 2)) ms")
 
-            push!(DEBUG_INFO.messages, "avg. texture upload time per frame: $(round(sum(DEBUG_INFO.texture_upload_time_buffer) / (1e6 * length(DEBUG_INFO.texture_upload_time_buffer)), digits = 2)) ms")
+            push!(DEBUG_INFO.messages, "avg. texture upload time per frame: $(round(sum(DEBUG_INFO.texture_upload_time_buffer) / (1000 * length(DEBUG_INFO.texture_upload_time_buffer)), digits = 2)) ms")
 
-            push!(DEBUG_INFO.messages, "avg. sleep time theoretical: $(round(sum(DEBUG_INFO.sleep_time_theoretical_buffer) / (1e6 * length(DEBUG_INFO.sleep_time_theoretical_buffer)), digits = 2)) ms")
+            push!(DEBUG_INFO.messages, "avg. sleep time theoretical: $(round(sum(DEBUG_INFO.sleep_time_theoretical_buffer) / (1000 * length(DEBUG_INFO.sleep_time_theoretical_buffer)), digits = 2)) ms")
 
-            push!(DEBUG_INFO.messages, "avg. sleep time observed: $(round(sum(DEBUG_INFO.sleep_time_observed_buffer) / (1e6 * length(DEBUG_INFO.sleep_time_observed_buffer)), digits = 2)) ms")
+            push!(DEBUG_INFO.messages, "avg. sleep time observed: $(round(sum(DEBUG_INFO.sleep_time_observed_buffer) / (1000 * length(DEBUG_INFO.sleep_time_observed_buffer)), digits = 2)) ms")
 
-            push!(DEBUG_INFO.messages, "avg. buffer swap time per frame: $(round(sum(DEBUG_INFO.buffer_swap_time_buffer) / (1e6 * length(DEBUG_INFO.buffer_swap_time_buffer)), digits = 2)) ms")
+            push!(DEBUG_INFO.messages, "avg. buffer swap time per frame: $(round(sum(DEBUG_INFO.buffer_swap_time_buffer) / (1000 * length(DEBUG_INFO.buffer_swap_time_buffer)), digits = 2)) ms")
 
             push!(DEBUG_INFO.messages, "length(entities): $(length(entities))")
 
@@ -414,13 +448,13 @@ function start()
 
         frame_number = frame_number + 1
 
-        sleep_time_theoretical = max(0, min_ns_per_frame - (get_time(reference_time) - frame_start_time))
+        sleep_time_theoretical = max(0, min_μs_per_frame - (get_time(reference_time) - frame_start_time))
         if IS_DEBUG
             push!(DEBUG_INFO.sleep_time_theoretical_buffer, sleep_time_theoretical)
         end
 
         sleep_start_time = get_time(reference_time)
-        sleep(sleep_time_theoretical / 1e9)
+        sleep(sleep_time_theoretical / 1e6)
         sleep_end_time = get_time(reference_time)
         if IS_DEBUG
             push!(DEBUG_INFO.sleep_time_observed_buffer, sleep_end_time - sleep_start_time)
