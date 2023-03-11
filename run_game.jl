@@ -207,7 +207,7 @@ function start()
         AABB(Vec(get_block_start(1, PIXEL_LENGTH), get_block_start(1, PIXEL_LENGTH)), 32 * 4 * PIXEL_LENGTH, 24 * 4 * PIXEL_LENGTH),
         DYNAMIC,
         load_texture(texture_atlas, "assets/burning_loop_1.png", length_scale = 4),
-        AnimationState(1, 8, 100_000, 1),
+        AnimationState(1, 8, 1000, 1),
     )
 
     # ground
