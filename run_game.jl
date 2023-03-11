@@ -89,7 +89,7 @@ include("textures.jl")
 include("entity_component_system.jl")
 include("utils.jl")
 
-const PIXEL_LENGTH = 65536
+const PIXEL_LENGTH = 2^24
 
 get_block_start(i_block, block_length) = (i_block - one(i_block)) * block_length + one(block_length)
 get_block_end(i_block, block_length) = i_block * block_length + one(block_length)
@@ -328,9 +328,9 @@ function start()
         key_down_went_down = SI.went_down(user_input_state.keyboard_buttons[Int(GLFW.KEY_DOWN) + 1])
 
         if key_up_went_down && !key_down_went_down
-            entities[2] = (Accessors.@set player.velocity.x = -5000)
+            entities[2] = (Accessors.@set player.velocity.x = -500_000)
         elseif !key_up_went_down && key_down_went_down
-            entities[2] = (Accessors.@set player.velocity.x = 5000)
+            entities[2] = (Accessors.@set player.velocity.x = 500_000)
         end
 
         player = entities[2]
@@ -338,9 +338,9 @@ function start()
         key_right_ended_down = user_input_state.keyboard_buttons[Int(GLFW.KEY_RIGHT) + 1].ended_down
 
         if key_left_ended_down && !key_right_ended_down
-            entities[2] = (Accessors.@set player.velocity.y = -5000)
+            entities[2] = (Accessors.@set player.velocity.y = -500_000)
         elseif !key_left_ended_down && key_right_ended_down
-            entities[2] = (Accessors.@set player.velocity.y = 5000)
+            entities[2] = (Accessors.@set player.velocity.y = 500_000)
         else
             entities[2] = (Accessors.@set player.velocity.y = NULL_VELOCITY.y)
         end

@@ -128,7 +128,7 @@ function update!(entities, dt)
                         dy = entity1.velocity.y * dt
 
                         if is_jumpable(entity1) && !is_on_platform(entity1)
-                            gravity = 1
+                            gravity = 32
                             dx = dx + gravity * dt * dt
                         end
 
@@ -235,7 +235,7 @@ function integrate!(entities, dt)
         if is_alive(entity)
             if is_movable(entity)
                 if is_jumpable(entity) && !is_on_platform(entity)
-                    gravity = 1
+                    gravity = 32
                     new_velocity = Vec(entity.velocity.x + gravity * dt, entity.velocity.y)
                 else
                     new_velocity = entity.velocity
